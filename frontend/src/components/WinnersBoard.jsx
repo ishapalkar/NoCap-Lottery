@@ -61,7 +61,7 @@ export function WinnersBoard() {
     const interval = setInterval(() => {
       setWinners((prev) => {
         const newWinner = {
-          id: prev[0].id + 1,
+          id: Date.now(), // Use timestamp for truly unique IDs
           rank: 1,
           address: `0x${Math.random().toString(16).substr(2, 4)}...${Math.random().toString(16).substr(2, 4)}`,
           prize: ['2.8 ETH', '1,250 MATIC', '125 SOL', '15 BNB', '3,500 USDC'][Math.floor(Math.random() * 5)],
@@ -70,7 +70,12 @@ export function WinnersBoard() {
           time: 'just now',
           emoji: ['🥇', '🎯', '✨', '🎊', '💎'][Math.floor(Math.random() * 5)],
         };
-        return [newWinner, ...prev.slice(0, 4)];
+        // Update ranks for all winners
+        const updatedWinners = [newWinner, ...prev.slice(0, 4)].map((winner, index) => ({
+          ...winner,
+          rank: index + 1
+        }));
+        return updatedWinners;
       });
     }, 15000);
 

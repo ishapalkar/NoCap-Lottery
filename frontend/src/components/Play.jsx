@@ -1,21 +1,62 @@
 import { useState } from 'react';
-import { Wallet, ArrowDownCircle, ArrowUpCircle, Zap, Clock } from 'lucide-react';
+import { ArrowDownCircle, ArrowUpCircle, Zap, Clock, Loader2, CheckCircle, XCircle } from 'lucide-react';
+import { useAccount, useBalance } from 'wagmi';
+import { useLiFi } from '../hooks/useLiFi';
+import { parseUnits } from 'viem';
 
 const chains = [
-  { id: 'ethereum', name: 'Ethereum', icon: '⟠' },
-  { id: 'arbitrum', name: 'Arbitrum', icon: '🔷' },
-  { id: 'optimism', name: 'Optimism', icon: '🔴' },
-  { id: 'base', name: 'Base', icon: '🔵' }
+  // Mainnets (fully supported by LI.FI)
+  { id: 1, name: 'Ethereum', icon: '⟠', chainId: 1 },
+  { id: 42161, name: 'Arbitrum', icon: '🔷', chainId: 42161 },
+  { id: 10, name: 'Optimism', icon: '🔴', chainId: 10 },
+  { id: 8453, name: 'Base', icon: '🔵', chainId: 8453 },
+  // Testnets (limited support - use with caution)
+  { id: 11155111, name: 'Sepolia (Test)', icon: '⟠', chainId: 11155111 },
+  { id: 84532, name: 'Base Sepolia (Test)', icon: '🔵', chainId: 84532 },
 ];
 
 export function Play() {
-  const [selectedChain, setSelectedChain] = useState('ethereum');
+  const { address, isConnected, chain: connectedChain } = useAccount();
+  const { depositFromAnyChain, isLoading, error, txStatus } = useLiFi();
+  
+  const [selectedChain, setSelectedChain] = useState(10); // Default to Optimism mainnet
   const [principalAmount] = useState('100'); // Fixed amount
   const [activeTab, setActiveTab] = useState('deposit');
+  const [depositSuccess, setDepositSuccess] = useState(false);
 
-  const handleDeposit = () => {
-    console.log('Deposit', principalAmount, 'on', selectedChain);
-    alert(`Depositing ${principalAmount} USDC on ${chains.find(c => c.id === selectedChain)?.name}`);
+  // Get user's USDC balance on connected chain
+  const { data: usdcBalance } = useBalance({
+    address: address,
+    token: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', // USDC on Ethereum (example)
+    enabled: isConnected,
+  });
+
+  const handleDeposit = async () => {
+    if (!isConnected) {
+      alert('Please connect your wallet first');
+      return;
+    }
+
+    try {
+      setDepositSuccess(false);
+      
+      // Convert 100 USD equivalent to smallest unit
+      // For ETH: 18 decimals (we'll use a small amount like 0.01 ETH for testing)
+      const amount = parseUnits('0.01', 18).toString(); // 0.01 ETH for testing
+      
+      // Execute cross-chain deposit via LI.FI
+      await depositFromAnyChain(
+        selectedChain.toString(),
+        'ETH', // Source token - native token on each chain
+        amount
+      );
+      
+      setDepositSuccess(true);
+      setTimeout(() => setDepositSuccess(false), 5000);
+    } catch (err) {
+      console.error('Deposit failed:', err);
+      // Error is already handled in useLiFi hook
+    }
   };
 
   const handleWithdraw = () => {
@@ -217,13 +258,14 @@ export function Play() {
             {/* Deposit Button */}
             <button
               onClick={handleDeposit}
+              disabled={isLoading || !isConnected}
               style={{
-                background: 'var(--primary)',
+                background: isLoading ? 'rgba(0, 255, 157, 0.5)' : 'var(--primary)',
                 color: '#000',
                 border: 'none',
                 padding: '1rem',
                 borderRadius: '8px',
-                cursor: 'pointer',
+                cursor: isLoading ? 'not-allowed' : 'pointer',
                 fontFamily: 'monospace',
                 fontSize: '1rem',
                 fontWeight: '700',
@@ -234,20 +276,103 @@ export function Play() {
                 justifyContent: 'center',
                 gap: '0.5rem',
                 transition: 'all 0.3s ease',
-                marginTop: '0.5rem'
+                marginTop: '0.5rem',
+                opacity: isLoading || !isConnected ? 0.6 : 1
               }}
               onMouseEnter={(e) => {
-                e.target.style.transform = 'scale(1.02)';
-                e.target.style.boxShadow = '0 0 20px rgba(0, 255, 157, 0.5)';
+                if (!isLoading && isConnected) {
+                  e.target.style.transform = 'scale(1.02)';
+                  e.target.style.boxShadow = '0 0 20px rgba(0, 255, 157, 0.5)';
+                }
               }}
               onMouseLeave={(e) => {
                 e.target.style.transform = 'scale(1)';
                 e.target.style.boxShadow = 'none';
               }}
             >
-              <ArrowDownCircle size={20} />
-              Deposit Now
+              {isLoading ? (
+                <>
+                  <Loader2 size={20} className="animate-spin" style={{ animation: 'spin 1s linear infinite' }} />
+                  Processing...
+                </>
+              ) : !isConnected ? (
+                'Connect Wallet to Deposit'
+              ) : (
+                <>
+                  <ArrowDownCircle size={20} />
+                  Deposit Now via LI.FI
+                </>
+              )}
             </button>
+
+            {/* Transaction Status */}
+            {txStatus && (
+              <div style={{
+                background: 'rgba(0, 255, 157, 0.1)',
+                border: '1px solid var(--primary)',
+                borderRadius: '8px',
+                padding: '1rem',
+                fontFamily: 'monospace',
+                fontSize: '0.875rem',
+                color: 'var(--primary)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}>
+                <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
+                {txStatus}
+              </div>
+            )}
+
+            {/* Success Message */}
+            {depositSuccess && (
+              <div style={{
+                background: 'rgba(0, 255, 157, 0.2)',
+                border: '1px solid var(--primary)',
+                borderRadius: '8px',
+                padding: '1rem',
+                fontFamily: 'monospace',
+                fontSize: '0.875rem',
+                color: 'var(--primary)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}>
+                <CheckCircle size={16} />
+                Deposit successful! You're now in the lottery pool 🎉
+              </div>
+            )}
+
+            {/* Error Message */}
+            {error && (
+              <div style={{
+                background: 'rgba(255, 0, 0, 0.1)',
+                border: '1px solid rgba(255, 0, 0, 0.5)',
+                borderRadius: '8px',
+                padding: '1rem',
+                fontFamily: 'monospace',
+                fontSize: '0.875rem',
+                color: '#ff6b6b',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}>
+                <XCircle size={16} />
+                {error}
+              </div>
+            )}
+
+            {/* Connection Info */}
+            {isConnected && connectedChain && (
+              <div style={{
+                fontSize: '0.75rem',
+                color: 'rgba(255, 255, 255, 0.5)',
+                textAlign: 'center',
+                fontFamily: 'monospace'
+              }}>
+                Connected: {address?.slice(0, 6)}...{address?.slice(-4)} on {connectedChain.name}
+              </div>
+            )}
           </div>
         )}
 

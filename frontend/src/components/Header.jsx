@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Wallet } from 'lucide-react';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 
 export function Header({ onNavigate, currentView }) {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -35,10 +35,7 @@ export function Header({ onNavigate, currentView }) {
           <button onClick={() => onNavigate('docs')} style={{ ...styles.navLink, color: currentView === 'docs' ? 'var(--primary)' : 'rgba(255, 255, 255, 0.7)' }}>Docs</button>
         </nav>
 
-        <button style={styles.connectButton}>
-          <Wallet size={18} />
-          <span>Connect Wallet</span>
-        </button>
+        <ConnectButton />
       </div>
     </header>
   );
@@ -89,20 +86,5 @@ const styles = {
     background: 'transparent',
     border: 'none',
     cursor: 'pointer',
-  },
-  connectButton: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-    padding: '0.5rem 1rem',
-    background: 'transparent',
-    color: '#ffffff',
-    border: '1px solid rgba(255, 255, 255, 0.2)',
-    borderRadius: 'calc(var(--radius) / 1.5)',
-    fontFamily: 'monospace',
-    fontSize: '0.75rem',
-    fontWeight: '500',
-    cursor: 'pointer',
-    transition: 'all 0.3s',
   },
 };

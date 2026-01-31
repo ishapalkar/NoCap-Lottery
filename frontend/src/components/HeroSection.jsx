@@ -302,13 +302,10 @@ const styles = {
     bottom: '2rem',
     left: '50%',
     transform: 'translateX(-50%)',
-    display: 'none',
+    display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     gap: '0.5rem',
-    '@media (min-width: 1024px)': {
-      display: 'flex',
-    },
   },
   scrollText: {
     fontFamily: 'monospace',
