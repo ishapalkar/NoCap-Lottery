@@ -131,7 +131,7 @@ export function WinnersBoard() {
                   ...styles.row,
                   ...(index === 0 ? styles.firstRow : {}),
                 }}
-                whileHover={{ scale: 1.01, x: 3 }}
+                whileHover={{ x: 2, transition: { duration: 0.15 } }}
               >
                 <div style={styles.rowGrid}>
                   <div style={styles.rankCell}>

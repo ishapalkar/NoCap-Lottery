@@ -98,21 +98,20 @@ p {
   box-shadow: var(--shadow-offset) var(--shadow-offset) 0 var(--marker-yellow);
 }
 
-/* Whiteboard Grid Background Animation */
+/* Clean Animated Grid Background */
 .whiteboard-bg {
   background-color: #ffffff;
   background-image: 
-    radial-gradient(circle, #e8e8e8 1.5px, transparent 1.5px),
-    linear-gradient(to right, #f0f0f0 1px, transparent 1px),
-    linear-gradient(to bottom, #e8e6dd 1px, transparent 1px);
-  background-size: 25px 25px, 50px 50px, 50px 50px;
-  background-position: 0 0, 0 0, 0 0;
-  animation: gridFloat 80s linear infinite;
+    linear-gradient(rgba(200, 200, 200, 0.15) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(200, 200, 200, 0.15) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-position: 0 0, 0 0;
+  animation: gridSlide 120s linear infinite;
 }
 
-@keyframes gridFloat {
-  0% { background-position: 0 0, 0 0, 0 0; }
-  100% { background-position: 25px 25px, 50px 50px, 50px 50px; }
+@keyframes gridSlide {
+  0% { background-position: 0 0, 0 0; }
+  100% { background-position: 40px 40px, 40px 40px; }
 }
 
 /* Retro Gaming Loading Bars */
@@ -216,8 +215,8 @@ p {
 }
 
 .card-squishy:hover {
-  transform: translateY(-5px) rotate(1deg);
-  box-shadow: 8px 8px 0 var(--ink-black);
+  transform: translateY(-2px);
+  box-shadow: 6px 6px 0 var(--ink-black);
 }
 
 /* Animations */
@@ -433,16 +432,16 @@ p {
 }
 
 .icon-badge:hover {
-  transform: rotate(3deg) scale(1.05);
+  transform: rotate(2deg) scale(1.02);
 }
 
 /* Hover lift effect */
 .hover-lift {
-  transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  transition: transform 0.15s ease-out;
 }
 
 .hover-lift:hover {
-  transform: translateY(-5px) rotate(-1deg);
+  transform: translateY(-2px);
 }
 
 /* Responsive design */
@@ -497,8 +496,8 @@ p {
 }
 
 .card-squishy:hover {
-  transform: translateY(-4px) scale(1.02);
-  box-shadow: 8px 8px 0 var(--ink-black);
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: 6px 6px 0 var(--ink-black);
 }
 
 /* Text with handwritten effect */
