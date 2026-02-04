@@ -52,10 +52,10 @@ export function Header() {
               style={{ 
                 ...styles.navLink, 
                 background: isActive('/') ? 'var(--marker-yellow)' : 'white',
-                padding: '10px 20px',
-                borderRadius: '12px',
-                border: '3px solid var(--ink-black)',
-                boxShadow: isActive('/') ? '4px 4px 0 var(--ink-black)' : '3px 3px 0 var(--ink-black)',
+                padding: '6px 12px',
+                borderRadius: '8px',
+                border: '2px solid var(--ink-black)',
+                boxShadow: '2px 2px 0 var(--ink-black)',
               }}
               className="btn-bounce"
             >
@@ -66,14 +66,14 @@ export function Header() {
               style={{ 
                 ...styles.navLink,
                 background: (isActive('/pools') || location.pathname.startsWith('/pools/')) ? 'var(--marker-cyan)' : 'white',
-                padding: '10px 20px',
-                borderRadius: '12px',
-                border: '3px solid var(--ink-black)',
-                boxShadow: (isActive('/pools') || location.pathname.startsWith('/pools/')) ? '4px 4px 0 var(--ink-black)' : '3px 3px 0 var(--ink-black)',
+                padding: '6px 12px',
+                borderRadius: '8px',
+                border: '2px solid var(--ink-black)',
+                boxShadow: '2px 2px 0 var(--ink-black)',
               }}
               className="btn-bounce"
             >
-              🎮 PLAY GAME
+              🎮 PLAY
             </button>
             <button 
               onClick={() => {
@@ -90,10 +90,10 @@ export function Header() {
               style={{ 
                 ...styles.navLink,
                 background: 'white',
-                padding: '10px 20px',
-                borderRadius: '12px',
-                border: '3px solid var(--ink-black)',
-                boxShadow: '3px 3px 0 var(--ink-black)',
+                padding: '6px 12px',
+                borderRadius: '8px',
+                border: '2px solid var(--ink-black)',
+                boxShadow: '2px 2px 0 var(--ink-black)',
               }}
               className="btn-bounce"
             >
@@ -119,20 +119,20 @@ const styles = {
     zIndex: 50,
     display: 'flex',
     justifyContent: 'center',
-    padding: '0 1.5rem',
+    padding: '0.5rem 1rem',
   },
   header: {
     width: '100%',
     maxWidth: '1200px',
     background: 'white',
-    border: '4px solid var(--ink-black)',
-    borderRadius: '20px',
-    boxShadow: '6px 6px 0 var(--ink-black)',
-    transition: 'all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
+    border: '3px solid var(--ink-black)',
+    borderRadius: '16px',
+    boxShadow: '4px 4px 0 var(--ink-black)',
+    transition: 'transform 0.2s ease',
     backdropFilter: 'blur(10px)',
   },
   container: {
-    padding: '1rem 1.5rem',
+    padding: '0.5rem 1rem',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -157,15 +157,15 @@ const styles = {
   },
   nav: {
     display: 'flex',
-    gap: '1rem',
+    gap: '0.5rem',
     alignItems: 'center',
   },
   navLink: {
     fontFamily: 'Fredoka, sans-serif',
-    fontSize: '1rem',
+    fontSize: '13px',
     fontWeight: 700,
     textDecoration: 'none',
-    transition: 'all 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
+    transition: 'transform 0.2s ease',
     color: 'var(--ink-black)',
     cursor: 'pointer',
   },

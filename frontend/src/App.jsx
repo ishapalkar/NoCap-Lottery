@@ -9,7 +9,6 @@ import { USDCPool } from './pages/USDCPool';
 import { ETHPool } from './pages/ETHPool';
 import { BTCPool } from './pages/BTCPool';
 import { SOLPool } from './pages/SOLPool';
-import { Dashboard } from './pages/Dashboard';
 import { Withdraw } from './pages/Withdraw';
 import { Leaderboard } from './pages/Leaderboard';
 import { Play } from './components/Play';
@@ -66,14 +65,6 @@ function App() {
 
           {/* SOL Pool Route */}
           <Route path="/pools/sol" element={<SOLPool />} />
-
-          {/* Dashboard Route */}
-          <Route path="/dashboard" element={
-            <>
-              <Header />
-              <Dashboard />
-            </>
-          } />
 
           {/* Withdraw Route */}
           <Route path="/withdraw" element={

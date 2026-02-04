@@ -170,7 +170,7 @@ export function HeroSection() {
           >
             {/* Super Safe Card */}
             <motion.div
-              whileHover={{ scale: 1.01, y: -2, transition: { duration: 0.15 } }}
+              className="card-squishy"
               style={{...styles.featureCard, background: 'rgba(255, 255, 255, 1)', borderColor: 'var(--marker-cyan)'}}
             >
               <div style={styles.featureIcon}>🛡️</div>
@@ -182,7 +182,7 @@ export function HeroSection() {
             
             {/* Fast Card */}
             <motion.div
-              whileHover={{ scale: 1.01, y: -2, transition: { duration: 0.15 } }}
+              className="card-squishy"
               style={{...styles.featureCard, background: 'rgba(255, 255, 255, 1)', borderColor: 'var(--marker-pink)'}}
             >
               <div style={styles.featureIcon}>⚡</div>
@@ -194,7 +194,7 @@ export function HeroSection() {
             
             {/* Big Prizes Card */}
             <motion.div
-              whileHover={{ scale: 1.01, y: -2, transition: { duration: 0.15 } }}
+              className="card-squishy"
               style={{...styles.featureCard, background: 'rgba(255, 255, 255, 1)', borderColor: 'var(--marker-yellow)'}}
             >
               <div style={styles.featureIcon}>🏆</div>
@@ -213,8 +213,7 @@ export function HeroSection() {
             style={styles.buttons}
           >
             <motion.button
-              whileHover={{ scale: 1.02, y: -2, transition: { duration: 0.15 } }}
-              whileTap={{ scale: 0.98 }}
+              className="btn-bounce"
               onClick={() => navigate('/pools')} 
               style={styles.primaryButton}
             >
@@ -222,8 +221,7 @@ export function HeroSection() {
             </motion.button>
             
             <motion.button
-              whileHover={{ scale: 1.02, y: -2, transition: { duration: 0.15 } }}
-              whileTap={{ scale: 0.98 }}
+              className="btn-bounce"
               onClick={() => window.scrollTo({top: window.innerHeight, behavior: 'smooth'})} 
               style={styles.secondaryButton}
             >

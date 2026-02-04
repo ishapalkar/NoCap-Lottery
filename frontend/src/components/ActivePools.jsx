@@ -67,8 +67,7 @@ export function ActivePools() {
               initial={{ y: 30, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.2, delay: 0.3 + index * 0.05 }}
-              whileHover={{ y: -2, transition: { duration: 0.15 } }}
-              whileTap={{ scale: 0.98 }}
+              className="card-squishy"
               style={styles.poolCard}
             >
               {/* Icon */}
@@ -104,8 +103,7 @@ export function ActivePools() {
               
               {/* Go Play Button */}
               <motion.button
-                whileHover={{ scale: 1.02, transition: { duration: 0.15 } }}
-                whileTap={{ scale: 0.98 }}
+                className="btn-bounce"
                 onClick={() => navigate(`/pools/${pool.id}`)}
                 style={styles.playButton}
               >
