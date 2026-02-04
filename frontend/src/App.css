@@ -233,6 +233,16 @@ p {
   }
 }
 
+/* Progress bar stripes animation */
+@keyframes progress-stripes {
+  from { 
+    background-position: 0 0; 
+  }
+  to { 
+    background-position: 40px 0; 
+  }
+}
+
 /* Animations */
 @keyframes fadeInUp {
   from {

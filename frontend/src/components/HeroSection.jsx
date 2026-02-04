@@ -1,244 +1,95 @@
-import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { motion } from 'framer-motion';
-import { FloatingCoins } from './FloatingCoins';
-
-gsap.registerPlugin(ScrollTrigger);
-
-const roles = ['NO CAP', 'NO LOSS', 'NO RISK', 'ZERO STRESS', 'BIG VIBES', 'PURE PROFIT'];
 
 export function HeroSection() {
   const navigate = useNavigate();
-  const [currentRole, setCurrentRole] = useState(0);
-  const [displayText, setDisplayText] = useState('');
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  useEffect(() => {
-    const targetText = roles[currentRole];
-    const timeout = setTimeout(
-      () => {
-        if (!isDeleting) {
-          if (displayText.length < targetText.length) {
-            setDisplayText(targetText.slice(0, displayText.length + 1));
-          } else {
-            setTimeout(() => setIsDeleting(true), 2000);
-          }
-        } else {
-          if (displayText.length > 0) {
-            setDisplayText(displayText.slice(0, -1));
-          } else {
-            setIsDeleting(false);
-            setCurrentRole((prev) => (prev + 1) % roles.length);
-          }
-        }
-      },
-      isDeleting ? 50 : 100
-    );
-    return () => clearTimeout(timeout);
-  }, [displayText, isDeleting, currentRole]);
-
-  useEffect(() => {
-    // Scroll float animations
-    gsap.set('.float-element', { y: 50, opacity: 0 });
-
-    gsap.to('.float-element', {
-      y: 0,
-      opacity: 1,
-      duration: 1,
-      ease: 'power2.out',
-      stagger: 0.2,
-      scrollTrigger: {
-        trigger: '.hero-grid-responsive',
-        start: 'top 80%',
-        end: 'bottom 20%',
-        toggleActions: 'play none none reverse'
-      }
-    });
-
-    // Floating animation for badges
-    gsap.to('.badge-float', {
-      y: '+=10',
-      duration: 2,
-      ease: 'power1.inOut',
-      yoyo: true,
-      repeat: -1,
-      delay: 1
-    });
-
-    // Glow pulse animation
-    gsap.to('.glow-pulse', {
-      scale: 1.1,
-      opacity: 0.8,
-      duration: 3,
-      ease: 'power1.inOut',
-      yoyo: true,
-      repeat: -1
-    });
-
-    return () => {
-      ScrollTrigger.getAll().forEach(trigger => trigger.kill());
-    };
-  }, []);
 
   return (
     <section style={styles.section}>
       <div style={styles.container}>
         
-        {/* Floating Coins Background */}
-        <FloatingCoins />
-        
-        {/* Animated floating elements */}
+        {/* Decorative floating emojis */}
         <motion.div
           animate={{ 
             y: [0, -15, 0],
             rotate: [0, 5, 0],
           }}
           transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-          style={{position: 'absolute', top: '15%', left: '5%', fontSize: '4rem', opacity: 0.4, zIndex: 1}}
-        >
-          🪙
-        </motion.div>
-        <motion.div
-          animate={{ 
-            y: [0, 12, 0],
-            rotate: [0, -5, 0],
-          }}
-          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-          style={{position: 'absolute', top: '20%', right: '8%', fontSize: '3.5rem', opacity: 0.4, zIndex: 1}}
-        >
-          💎
-        </motion.div>
-        <motion.div
-          animate={{ 
-            y: [0, -12, 0],
-            x: [0, 8, 0],
-          }}
-          transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-          style={{position: 'absolute', bottom: '20%', left: '10%', fontSize: '3rem', opacity: 0.4, zIndex: 1}}
+          style={{position: 'absolute', top: '10%', left: '8%', fontSize: '3rem', opacity: 0.3, zIndex: 1}}
         >
           ⭐
         </motion.div>
         <motion.div
           animate={{ 
             y: [0, 15, 0],
+            rotate: [0, -8, 0],
+          }}
+          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+          style={{position: 'absolute', top: '15%', right: '10%', fontSize: '3rem', opacity: 0.3, zIndex: 1}}
+        >
+          ⭐
+        </motion.div>
+        <motion.div
+          animate={{ 
+            scale: [1, 1.2, 1],
+          }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+          style={{position: 'absolute', bottom: '20%', left: '12%', fontSize: '2.5rem', opacity: 0.3, zIndex: 1}}
+        >
+          😊
+        </motion.div>
+        <motion.div
+          animate={{ 
+            y: [0, -12, 0],
             rotate: [0, 10, 0],
           }}
           transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}
-          style={{position: 'absolute', bottom: '25%', right: '12%', fontSize: '3.5rem', opacity: 0.4, zIndex: 1}}
+          style={{position: 'absolute', bottom: '25%', right: '15%', fontSize: '3rem', opacity: 0.3, zIndex: 1}}
         >
-          🎯
+          ⭐
         </motion.div>
         
         <div style={styles.contentWrapper}>
-          {/* Main Title - Center of Screen */}
-          <motion.div
-            initial={{scale: 0.9, opacity: 0}}
-            animate={{scale: 1, opacity: 1}}
-            transition={{duration: 0.3, ease: "easeOut"}}
-            style={styles.heroTitle}
-          >
+          
+          {/* WIN REAL PRIZES Badge */}
+          <div style={styles.badge}>
+            ⭐ WIN REAL PRIZES! ⭐
+          </div>
+
+          {/* Main Title */}
+          <div style={styles.heroTitle}>
             <h1 style={styles.mainTitle}>
               DEPOSIT MONEY.
             </h1>
-            <motion.h1
-              style={{...styles.mainTitle, color: 'var(--marker-pink)'}}
-              animate={{scale: [1, 1.02, 1]}}
-              transition={{duration: 1.5, repeat: Infinity}}
-            >
-              WIN THE POT! 🏆
-            </motion.h1>
-            <motion.div
-              style={styles.rotatingTextContainer}
-              key={displayText}
-              initial={{opacity: 0, y: -10}}
-              animate={{opacity: 1, y: 0}}
-              exit={{opacity: 0, y: 10}}
-            >
-              <span style={styles.rotatingText}>
-                {displayText}<span style={styles.cursor}>|</span>
-              </span>
-            </motion.div>
-          </motion.div>
+            <h1 style={{...styles.mainTitle, color: '#00a8e8', fontStyle: 'italic'}}>
+              WIN THE POT!
+            </h1>
+          </div>
 
-          <motion.p
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.15, duration: 0.3 }}
-            style={styles.subtitle}
-          >
+          {/* Subtitle */}
+          <p style={styles.subtitle}>
             We take the interest and give it to one lucky winner.<br/>
             Everyone else keeps their cash. It's magic! ✨
-          </motion.p>
-
-          {/* Feature Cards Grid */}
-          <motion.div
-            initial={{ y: 30, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.25, duration: 0.3 }}
-            style={styles.cardsGrid}
-          >
-            {/* Super Safe Card */}
-            <motion.div
-              className="card-squishy"
-              style={{...styles.featureCard, background: 'rgba(255, 255, 255, 1)', borderColor: 'var(--marker-cyan)'}}
-            >
-              <div style={styles.featureIcon}>🛡️</div>
-              <h3 style={{...styles.featureTitle, color: 'var(--marker-cyan)'}}>SUPER SAFE!</h3>
-              <p style={styles.featureText}>
-                We use big-brain DeFi stuff to make sure your money never leaves the vault.
-              </p>
-            </motion.div>
-            
-            {/* Fast Card */}
-            <motion.div
-              className="card-squishy"
-              style={{...styles.featureCard, background: 'rgba(255, 255, 255, 1)', borderColor: 'var(--marker-pink)'}}
-            >
-              <div style={styles.featureIcon}>⚡</div>
-              <h3 style={{...styles.featureTitle, color: 'var(--marker-pink)'}}>FAST AS HECK!</h3>
-              <p style={styles.featureText}>
-                Instant deposits and withdrawals. No paperwork, no boring bank stuff.
-              </p>
-            </motion.div>
-            
-            {/* Big Prizes Card */}
-            <motion.div
-              className="card-squishy"
-              style={{...styles.featureCard, background: 'rgba(255, 255, 255, 1)', borderColor: 'var(--marker-yellow)'}}
-            >
-              <div style={styles.featureIcon}>🏆</div>
-              <h3 style={{...styles.featureTitle, color: 'var(--marker-yellow)'}}>BIG PRIZES!</h3>
-              <p style={styles.featureText}>
-                Weekly draws for giant pots of gold. Someone's gotta win, why not you?
-              </p>
-            </motion.div>
-          </motion.div>
+          </p>
 
           {/* CTA Buttons */}
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.35, duration: 0.3 }}
-            style={styles.buttons}
-          >
-            <motion.button
-              className="btn-bounce"
+          <div style={styles.buttons}>
+            <button
               onClick={() => navigate('/pools')} 
               style={styles.primaryButton}
-            >
-              START PLAYING! 🚀
-            </motion.button>
-            
-            <motion.button
               className="btn-bounce"
+            >
+              START PLAYING!
+            </button>
+            
+            <button
               onClick={() => window.scrollTo({top: window.innerHeight, behavior: 'smooth'})} 
               style={styles.secondaryButton}
+              className="btn-bounce"
             >
-              HOW IT WORKS? 🤔
-            </motion.button>
-          </motion.div>
+              HOW IT WORKS?
+            </button>
+          </div>
         </div>
       </div>
     </section>
@@ -248,8 +99,8 @@ export function HeroSection() {
 const styles = {
   section: {
     position: 'relative',
-    padding: '6rem 1.5rem 3rem',
-    minHeight: '85vh',
+    padding: '8rem 1.5rem 6rem',
+    minHeight: '90vh',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -257,7 +108,7 @@ const styles = {
     background: '#ffffff',
   },
   container: {
-    maxWidth: '1200px',
+    maxWidth: '900px',
     margin: '0 auto',
     width: '100%',
     position: 'relative',
@@ -266,130 +117,77 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: '3rem',
+    gap: '2.5rem',
     textAlign: 'center',
+    position: 'relative',
+    zIndex: 2,
+  },
+  badge: {
+    padding: '0.75rem 2rem',
+    background: '#ffd23f',
+    border: '4px solid var(--ink-black)',
+    borderRadius: '50px',
+    fontSize: '1rem',
+    fontWeight: 900,
+    fontFamily: 'Fredoka, sans-serif',
+    textTransform: 'uppercase',
+    boxShadow: '5px 5px 0 var(--ink-black)',
+    letterSpacing: '0.02em',
   },
   heroTitle: {
-    marginBottom: '1rem',
-  },
-  rotatingTextContainer: {
-    marginTop: '1.5rem',
-    minHeight: '60px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  rotatingText: {
-    fontSize: 'clamp(2rem, 6vw, 3.5rem)',
-    fontWeight: 900,
-    fontFamily: 'Fredoka, sans-serif',
-    color: 'var(--marker-yellow)',
-    textTransform: 'uppercase',
-    letterSpacing: '-0.01em',
-    textShadow: '3px 3px 0 var(--ink-black)',
-  },
-  cursor: {
-    animation: 'blink 1s infinite',
-    marginLeft: '2px',
+    marginBottom: '0',
   },
   mainTitle: {
-    fontSize: 'clamp(3.5rem, 12vw, 7rem)',
+    fontSize: 'clamp(3rem, 10vw, 6rem)',
     fontWeight: 900,
-    lineHeight: 1,
+    lineHeight: 0.95,
     color: 'var(--ink-black)',
     fontFamily: 'Fredoka, sans-serif',
-    marginBottom: '0.5rem',
+    marginBottom: '0.3rem',
     textTransform: 'uppercase',
     letterSpacing: '-0.02em',
   },
   subtitle: {
-    maxWidth: '700px',
-    fontSize: 'clamp(1.25rem, 3vw, 1.5rem)',
-    lineHeight: '1.6',
+    maxWidth: '650px',
+    fontSize: 'clamp(1.15rem, 2.5vw, 1.35rem)',
+    lineHeight: '1.65',
     color: 'var(--ink-black)',
     fontFamily: 'Comic Neue, sans-serif',
     fontWeight: 600,
-  },
-  cardsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-    gap: '2rem',
-    width: '100%',
-    maxWidth: '1000px',
-  },
-  featureCard: {
-    padding: '2.5rem 2rem',
-    background: 'white',
-    border: '5px solid',
-    borderRadius: '20px',
-    boxShadow: '8px 8px 0 var(--ink-black)',
-    transition: 'all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
-    overflow: 'visible',
-    wordWrap: 'break-word',
-    overflowWrap: 'break-word',
-  },
-  featureIcon: {
-    fontSize: '4rem',
-    marginBottom: '1rem',
-    display: 'block',
-    filter: 'drop-shadow(3px 3px 0 rgba(0,0,0,0.1))',
-  },
-  featureTitle: {
-    fontSize: '1.75rem',
-    fontWeight: 900,
-    fontFamily: 'Fredoka, sans-serif',
-    marginBottom: '1rem',
-    fontStyle: 'italic',
-    wordWrap: 'break-word',
-    overflowWrap: 'break-word',
-    whiteSpace: 'normal',
-    textTransform: 'uppercase',
-    letterSpacing: '-0.02em',
-  },
-  featureText: {
-    fontSize: '1.1rem',
-    lineHeight: '1.6',
-    color: 'var(--ink-black)',
-    fontFamily: 'Comic Neue, sans-serif',
-    wordWrap: 'break-word',
-    overflowWrap: 'break-word',
-    whiteSpace: 'normal',
-    fontWeight: 600,
-    opacity: 0.85,
   },
   buttons: {
     display: 'flex',
     flexWrap: 'wrap',
-    gap: '1.5rem',
+    gap: '1.25rem',
     justifyContent: 'center',
-    marginTop: '1rem',
+    marginTop: '0.5rem',
   },
   primaryButton: {
-    padding: '1.25rem 3rem',
-    fontSize: '1.5rem',
+    padding: '1.1rem 2.5rem',
+    fontSize: '1.25rem',
     fontWeight: 900,
     fontFamily: 'Fredoka, sans-serif',
-    background: 'var(--marker-pink)',
+    background: '#ff6b9d',
     color: 'white',
-    border: '5px solid var(--ink-black)',
-    borderRadius: '20px',
+    border: '4px solid var(--ink-black)',
+    borderRadius: '15px',
     cursor: 'pointer',
-    boxShadow: '7px 7px 0 var(--ink-black)',
-    transition: 'all 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
+    boxShadow: '6px 6px 0 var(--ink-black)',
     textTransform: 'uppercase',
+    letterSpacing: '-0.01em',
   },
   secondaryButton: {
-    padding: '1.25rem 2.5rem',
-    fontSize: '1.3rem',
+    padding: '1.1rem 2.5rem',
+    fontSize: '1.25rem',
     fontWeight: 900,
     fontFamily: 'Fredoka, sans-serif',
-    background: 'var(--marker-cyan)',
-    color: 'white',
-    border: '5px solid var(--ink-black)',
-    borderRadius: '20px',
+    background: 'white',
+    color: 'var(--ink-black)',
+    border: '4px solid var(--ink-black)',
+    borderRadius: '15px',
     cursor: 'pointer',
-    boxShadow: '7px 7px 0 var(--ink-black)',
-    transition: 'all 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
+    boxShadow: '6px 6px 0 var(--ink-black)',
     textTransform: 'uppercase',
+    letterSpacing: '-0.01em',
   },
 };

@@ -1,172 +1,148 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { motion } from 'framer-motion';
+import { Trophy } from 'lucide-react';
 
 export function Header() {
-  const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   const isActive = (path) => location.pathname === path;
 
   return (
-    <header
-      style={{
-        ...styles.headerWrapper,
-      }}
-    >
-      <motion.div
-        initial={{ y: -10, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.3 }}
-        style={{
-          ...styles.header,
-          transform: isScrolled ? 'translateY(0.5rem)' : 'translateY(1rem)',
-        }}
-        className="animate-fade-in"
-      >
-        <div style={styles.container}>
-          <div style={styles.logo} onClick={() => navigate('/')} className="cursor-pointer hover-lift">
-            <motion.span
-              animate={{ rotate: [0, -8, 8, -8, 0] }}
-              transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 2 }}
-              style={styles.logoIcon}
-            >
-              🏆
-            </motion.span>
-            <span style={styles.logoText}>NOCAP!</span>
+    <header style={styles.headerWrapper}>
+      <div style={styles.container}>
+        <div style={styles.logo} onClick={() => navigate('/')} className="cursor-pointer">
+          <div style={styles.logoIcon}>
+            <Trophy style={{width: '24px', height: '24px', color: 'var(--ink-black)'}} />
           </div>
-
-          <nav style={styles.nav} className="nav-desktop">
-            <button 
-              onClick={() => navigate('/')} 
-              style={{ 
-                ...styles.navLink, 
-                background: isActive('/') ? 'var(--marker-yellow)' : 'white',
-                padding: '6px 12px',
-                borderRadius: '8px',
-                border: '2px solid var(--ink-black)',
-                boxShadow: '2px 2px 0 var(--ink-black)',
-              }}
-              className="btn-bounce"
-            >
-              🏠 HOME
-            </button>
-            <button 
-              onClick={() => navigate('/pools')} 
-              style={{ 
-                ...styles.navLink,
-                background: (isActive('/pools') || location.pathname.startsWith('/pools/')) ? 'var(--marker-cyan)' : 'white',
-                padding: '6px 12px',
-                borderRadius: '8px',
-                border: '2px solid var(--ink-black)',
-                boxShadow: '2px 2px 0 var(--ink-black)',
-              }}
-              className="btn-bounce"
-            >
-              🎮 PLAY
-            </button>
-            <button 
-              onClick={() => {
-                const winnersSection = document.getElementById('winners');
-                if (winnersSection) {
-                  winnersSection.scrollIntoView({ behavior: 'smooth' });
-                } else {
-                  navigate('/');
-                  setTimeout(() => {
-                    document.getElementById('winners')?.scrollIntoView({ behavior: 'smooth' });
-                  }, 100);
-                }
-              }} 
-              style={{ 
-                ...styles.navLink,
-                background: 'white',
-                padding: '6px 12px',
-                borderRadius: '8px',
-                border: '2px solid var(--ink-black)',
-                boxShadow: '2px 2px 0 var(--ink-black)',
-              }}
-              className="btn-bounce"
-            >
-              🏆 WINNERS
-            </button>
-          </nav>
-
-          <div className="btn-bounce">
-            <ConnectButton />
-          </div>
+          <span style={styles.logoText}>
+            NoCap<span style={{color: 'var(--marker-pink)'}}>!</span>
+          </span>
         </div>
-      </motion.div>
+
+        <nav style={styles.nav}>
+          <button 
+            onClick={() => navigate('/')} 
+            style={{ 
+              ...styles.navLink,
+              ...(isActive('/') && styles.navLinkActive)
+            }}
+          >
+            Home
+          </button>
+          <button 
+            onClick={() => navigate('/pools')} 
+            style={{ 
+              ...styles.navLink,
+              ...((isActive('/pools') || location.pathname.startsWith('/pools/')) && styles.navLinkActive)
+            }}
+          >
+            Play Game
+          </button>
+          <button 
+            onClick={() => {
+              const winnersSection = document.getElementById('winners');
+              if (winnersSection) {
+                winnersSection.scrollIntoView({ behavior: 'smooth' });
+              } else {
+                navigate('/');
+                setTimeout(() => {
+                  document.getElementById('winners')?.scrollIntoView({ behavior: 'smooth' });
+                }, 100);
+              }
+            }} 
+            style={styles.navLink}
+          >
+            Winners
+          </button>
+        </nav>
+
+        <div style={styles.walletButton}>
+          <ConnectButton />
+        </div>
+      </div>
     </header>
   );
 }
 
 const styles = {
   headerWrapper: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
+    position: 'sticky',
+    top: '1rem',
     zIndex: 50,
-    display: 'flex',
-    justifyContent: 'center',
-    padding: '0.5rem 1rem',
-  },
-  header: {
     width: '100%',
-    maxWidth: '1200px',
-    background: 'white',
-    border: '3px solid var(--ink-black)',
-    borderRadius: '16px',
-    boxShadow: '4px 4px 0 var(--ink-black)',
-    transition: 'transform 0.2s ease',
-    backdropFilter: 'blur(10px)',
+    padding: '0 1rem',
+    marginBottom: '2rem',
   },
   container: {
-    padding: '0.5rem 1rem',
+    maxWidth: '1200px',
+    margin: '0 auto',
     display: 'flex',
-    justifyContent: 'space-between',
+    height: '5rem',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '0 1.5rem',
+    background: 'white',
+    borderWidth: '3px',
+    borderStyle: 'solid',
+    borderColor: 'var(--ink-black)',
+    borderRadius: '15px 5px 15px 5px / 5px 15px 5px 15px',
+    boxShadow: '6px 6px 0px 0px rgba(0,0,0,1)',
   },
   logo: {
     display: 'flex',
     alignItems: 'center',
     gap: '0.5rem',
-    fontSize: '1.25rem',
-    fontWeight: 'bold',
     cursor: 'pointer',
+    transition: 'transform 0.2s ease',
   },
   logoIcon: {
-    fontSize: '2rem',
-    display: 'inline-block',
+    width: '2.5rem',
+    height: '2.5rem',
+    background: '#ffd23f',
+    borderWidth: '3px',
+    borderStyle: 'solid',
+    borderColor: 'var(--ink-black)',
+    borderRadius: '15px 5px 15px 5px / 5px 15px 5px 15px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transform: 'rotate(-3deg)',
+    transition: 'transform 0.2s ease',
   },
   logoText: {
-    color: 'var(--ink-black)',
     fontFamily: 'Fredoka, sans-serif',
-    fontSize: '1.75rem',
     fontWeight: 900,
+    fontSize: '1.5rem',
+    letterSpacing: '-0.02em',
+    textTransform: 'uppercase',
   },
   nav: {
     display: 'flex',
-    gap: '0.5rem',
     alignItems: 'center',
+    gap: '2rem',
   },
   navLink: {
-    fontFamily: 'Fredoka, sans-serif',
-    fontSize: '13px',
+    fontSize: '0.875rem',
     fontWeight: 700,
-    textDecoration: 'none',
-    transition: 'transform 0.2s ease',
+    textTransform: 'uppercase',
+    transition: 'all 0.2s ease',
     color: 'var(--ink-black)',
+    background: 'transparent',
+    border: 'none',
     cursor: 'pointer',
+    fontFamily: 'Fredoka, sans-serif',
+    position: 'relative',
+  },
+  navLinkActive: {
+    color: 'var(--marker-pink)',
+    background: 'linear-gradient(120deg, rgba(255,255,0,0.3) 0%, rgba(255,255,0,0.6) 100%)',
+    padding: '0.25rem 0.5rem',
+    borderRadius: '4px',
+  },
+  walletButton: {
+    display: 'flex',
+    alignItems: 'center',
   },
 };

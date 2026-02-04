@@ -293,12 +293,12 @@ export const Withdraw = () => {
 
           {showConfirmation && (
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+              initial={{opacity: 0}}
+              animate={{opacity: 1}}
               style={styles.finalWarning}
             >
-              <AlertTriangle size={20} color="#ff4d6d" style={{ marginRight: '8px' }} />
-              <p style={{ margin: 0 }>
+              <AlertTriangle size={20} color="#ff4d6d" style={{marginRight: '8px'}} />
+              <p style={{margin: 0}}>
                 <strong>Final Warning:</strong> This action cannot be undone. You will forfeit your tickets and prize chance.
               </p>
             </motion.div>
