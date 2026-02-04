@@ -1,18 +1,19 @@
 import { getDefaultConfig } from '@rainbow-me/rainbowkit';
-import { 
-  mainnet, 
-  arbitrum, 
-  optimism, 
-  base, 
+import {
+  mainnet,
+  arbitrum,
+  optimism,
+  base,
   baseSepolia,
   sepolia,
   arbitrumSepolia,
-  optimismSepolia 
+  optimismSepolia
 } from 'wagmi/chains';
+import { http } from 'wagmi';
 
 export const config = getDefaultConfig({
   appName: 'NoCap Lottery',
-  projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || 'YOUR_WALLETCONNECT_PROJECT_ID',
+  projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID,
   chains: [
     // Mainnets
     mainnet,
@@ -26,4 +27,14 @@ export const config = getDefaultConfig({
     optimismSepolia, // Optimism Sepolia - you have ETH here!
   ],
   ssr: false, // If using Next.js, set to true
+  transports: {
+    [mainnet.id]: http(),
+    [arbitrum.id]: http(),
+    [optimism.id]: http(),
+    [base.id]: http(),
+    [baseSepolia.id]: http(),
+    [sepolia.id]: http(),
+    [arbitrumSepolia.id]: http(),
+    [optimismSepolia.id]: http(),
+  },
 });

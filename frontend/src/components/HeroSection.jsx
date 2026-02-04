@@ -1,8 +1,14 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+gsap.registerPlugin(ScrollTrigger);
 
 const roles = ['no cap', 'no loss', 'no risk', 'no scam', 'no stress', 'no worries'];
 
-export function HeroSection({ onPlayClick }) {
+export function HeroSection() {
+  const navigate = useNavigate();
   const [currentRole, setCurrentRole] = useState(0);
   const [displayText, setDisplayText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
@@ -31,13 +37,56 @@ export function HeroSection({ onPlayClick }) {
     return () => clearTimeout(timeout);
   }, [displayText, isDeleting, currentRole]);
 
+  useEffect(() => {
+    // Scroll float animations
+    gsap.set('.float-element', { y: 50, opacity: 0 });
+
+    gsap.to('.float-element', {
+      y: 0,
+      opacity: 1,
+      duration: 1,
+      ease: 'power2.out',
+      stagger: 0.2,
+      scrollTrigger: {
+        trigger: '.hero-grid-responsive',
+        start: 'top 80%',
+        end: 'bottom 20%',
+        toggleActions: 'play none none reverse'
+      }
+    });
+
+    // Floating animation for badges
+    gsap.to('.badge-float', {
+      y: '+=10',
+      duration: 2,
+      ease: 'power1.inOut',
+      yoyo: true,
+      repeat: -1,
+      delay: 1
+    });
+
+    // Glow pulse animation
+    gsap.to('.glow-pulse', {
+      scale: 1.1,
+      opacity: 0.8,
+      duration: 3,
+      ease: 'power1.inOut',
+      yoyo: true,
+      repeat: -1
+    });
+
+    return () => {
+      ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+    };
+  }, []);
+
   return (
     <section style={styles.section}>
       <div style={styles.container}>
         <div style={styles.grid} className="hero-grid-responsive">
           <div style={styles.leftColumn}>
-            <div style={styles.textContent} className="animate-fade-in-up">
-              <p style={styles.subtitle}>NoCap Protocol — Cross-Chain Prize Savings</p>
+            <div style={styles.textContent} className="animate-fade-in-up float-element">
+              <p style={styles.subtitle}>NoCap Protocol — No-Loss Prize Savings</p>
               <h1 style={styles.title}>
                 Save with
                 <br />
@@ -45,26 +94,25 @@ export function HeroSection({ onPlayClick }) {
               </h1>
             </div>
 
-            <p style={styles.description} className="animate-fade-in-up stagger-2">
-              A cross-chain no-loss prize savings protocol. Deposit stablecoins from any chain via LI.FI, earn Aave yield on Base Sepolia, 
-              and compete for prizes from the yield pool.
-              <span style={{ color: 'var(--foreground)', fontWeight: 500 }}> Your principal is always safe and withdrawable.</span>
+            <p style={styles.description} className="animate-fade-in-up stagger-2 float-element">
+              A no-loss prize savings protocol on Ethereum Sepolia. Deposit USDC, earn Aave yield, 
+              and compete for weekly prizes. Your principal is always safe.
             </p>
 
-            <div style={styles.buttons} className="animate-fade-in-up stagger-3">
-              <button onClick={onPlayClick} style={styles.primaryButton} className="group">
-                <span style={{ position: 'relative', zIndex: 10 }}>play now</span>
+            <div style={styles.buttons} className="animate-fade-in-up stagger-3 float-element">
+              <button onClick={() => navigate('/pools')} style={styles.primaryButton} className="group">
+                <span style={{ position: 'relative', zIndex: 10 }}>Enter Pools</span>
                 <span style={{ position: 'relative', zIndex: 10, transition: 'transform 0.3s' }}>→</span>
                 <span style={styles.buttonBg} />
               </button>
-              <button style={styles.secondaryButton} className="group">
+              <button onClick={() => window.open('https://github.com/yourusername/nocap-lottery', '_blank')} style={styles.secondaryButton} className="group">
                 <span>how it works</span>
                 <span style={styles.arrow}>→</span>
               </button>
             </div>
           </div>
 
-          <div style={styles.rightColumn} className="animate-scale-in stagger-4">
+          <div style={styles.rightColumn} className="animate-scale-in stagger-4 float-element">
             <div style={styles.terminal} className="glass hover-lift">
               <div style={styles.terminalDots}>
                 <div style={{ ...styles.dot, background: '#ff5f56' }} />
@@ -78,33 +126,33 @@ export function HeroSection({ onPlayClick }) {
 │  PROTOCOL ARCHITECTURE             │
 ├────────────────────────────────────┤
 │                                    │
-│  1. Deposit via LI.FI Bridge       │
-│     → Any chain → Base Sepolia     │
+│  1. Deposit USDC on Sepolia        │
+│     → Minimum $100                 │
 │                                    │
 │  2. Funds in Aave ERC-4626 Vault   │
 │     → Principal Protected          │
 │     → Yield Accumulates            │
 │                                    │
 │  3. Yield → Prize Distribution     │
-│     → Winners via ENS              │
+│     → Winners via Chainlink VRF    │
 │     → Principal Always Safe        │
 │                                    │
-│  Status: LIVE ON BASE SEPOLIA      │
+│  Status: LIVE ON SEPOLIA           │
 └────────────────────────────────────┘`}
               </pre>
             </div>
 
-            <div style={styles.badge} className="animate-float">
+            <div style={styles.badge} className="badge-float">
               <span style={styles.badgeContent}>
                 <span style={styles.pulse} />
                 v0.1.0
               </span>
             </div>
-            <div style={styles.dateBadge} className="animate-float">
+            <div style={styles.dateBadge} className="badge-float">
               Dec. 2025
             </div>
 
-            <div style={styles.glow} />
+            <div style={styles.glow} className="glow-pulse" />
           </div>
         </div>
       </div>

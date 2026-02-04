@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 
-export function Header({ onNavigate, currentView }) {
+export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -11,6 +14,8 @@ export function Header({ onNavigate, currentView }) {
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const isActive = (path) => location.pathname === path;
 
   return (
     <header
@@ -23,16 +28,16 @@ export function Header({ onNavigate, currentView }) {
       }}
     >
       <div style={styles.container}>
-        <div style={styles.logo}>
+        <div style={styles.logo} onClick={() => navigate('/')} className="cursor-pointer">
           <span style={styles.logoIcon}>🎰</span>
           <span style={styles.logoText}>NoCap Lottery</span>
         </div>
 
         <nav style={styles.nav} className="nav-desktop">
-          <button onClick={() => onNavigate('home')} style={{ ...styles.navLink, color: currentView === 'home' ? 'var(--primary)' : 'rgba(255, 255, 255, 0.7)' }}>Home</button>
-          <button onClick={() => onNavigate('play')} style={{ ...styles.navLink, color: currentView === 'play' ? 'var(--primary)' : 'rgba(255, 255, 255, 0.7)' }}>Play</button>
-          <button onClick={() => onNavigate('leaderboard')} style={{ ...styles.navLink, color: currentView === 'leaderboard' ? 'var(--primary)' : 'rgba(255, 255, 255, 0.7)' }}>Leaderboard</button>
-          <button onClick={() => onNavigate('docs')} style={{ ...styles.navLink, color: currentView === 'docs' ? 'var(--primary)' : 'rgba(255, 255, 255, 0.7)' }}>Docs</button>
+          <button onClick={() => navigate('/')} style={{ ...styles.navLink, color: isActive('/') ? 'var(--primary)' : 'rgba(255, 255, 255, 0.7)' }}>Home</button>
+          <button onClick={() => navigate('/pools')} style={{ ...styles.navLink, color: isActive('/pools') || location.pathname.startsWith('/pools/') ? 'var(--primary)' : 'rgba(255, 255, 255, 0.7)' }}>Pools</button>
+          <button onClick={() => navigate('/play')} style={{ ...styles.navLink, color: isActive('/play') ? 'var(--primary)' : 'rgba(255, 255, 255, 0.7)' }}>Cross-Chain</button>
+          <a href="https://github.com/yourusername/nocap-lottery" target="_blank" rel="noopener noreferrer" style={styles.navLink}>Docs</a>
         </nav>
 
         <ConnectButton />

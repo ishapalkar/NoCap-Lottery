@@ -660,61 +660,6 @@ export function Play() {
           </div>
         )}
       </div>
-
-      {/* Demo Controls */}
-      <div style={{
-        width: '100%',
-        maxWidth: '600px',
-        background: 'rgba(255, 255, 255, 0.05)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-        borderRadius: '12px',
-        padding: '1.5rem',
-        backdropFilter: 'blur(10px)'
-      }}>
-        <div style={{
-          fontSize: '0.875rem',
-          fontFamily: 'monospace',
-          color: 'rgba(255, 255, 255, 0.6)',
-          marginBottom: '1rem',
-          textTransform: 'uppercase',
-          letterSpacing: '0.05em'
-        }}>
-          🎮 Hackathon Demo Controls
-        </div>
-        <button
-          onClick={handleSimulateWeek}
-          style={{
-            background: 'rgba(255, 255, 255, 0.1)',
-            color: 'var(--foreground)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            padding: '0.75rem 1.5rem',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            fontFamily: 'monospace',
-            fontSize: '0.875rem',
-            fontWeight: '600',
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            transition: 'all 0.3s ease',
-            width: '100%',
-            justifyContent: 'center'
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.borderColor = 'var(--primary)';
-            e.target.style.background = 'rgba(0, 255, 157, 0.1)';
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-            e.target.style.background = 'rgba(255, 255, 255, 0.1)';
-          }}
-        >
-          <Clock size={16} />
-          Simulate 1 Week
-        </button>
-      </div>
     </div>
   );
 }
