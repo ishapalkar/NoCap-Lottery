@@ -88,10 +88,10 @@ export function USDCPool() {
         <motion.button
           onClick={() => navigate('/pools')}
           style={styles.backButton}
+          className="btn-bounce"
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.3 }}
-          whileHover={{ x: -3, transition: { duration: 0.15 } }}
         >
           <ArrowLeft size={16} />
           <span>BACK TO POOLS</span>
@@ -117,10 +117,10 @@ export function USDCPool() {
           {/* Left Card - Prize Info */}
           <motion.div
             style={styles.prizeCard}
+            className="card-squishy"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.2 }}
-            whileHover={{ y: -2, transition: { duration: 0.15 } }}
           >
             <div style={styles.prizeHeader}>
               <h2 style={styles.prizeLabel}>CURRENT PRIZE</h2>
@@ -168,10 +168,10 @@ export function USDCPool() {
           {/* Right Card - Deposit */}
           <motion.div
             style={styles.depositCard}
+            className="card-squishy"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.3 }}
-            whileHover={{ y: -2, transition: { duration: 0.15 } }}
           >
             <h2 style={styles.depositTitle}>DEPOSIT USDC</h2>
             <p style={styles.depositSubtitle}>Get tickets for the next draw. Withdraw anytime.</p>
@@ -214,13 +214,12 @@ export function USDCPool() {
                 <motion.button
                   onClick={handleApprove}
                   disabled={approval.isPending || !depositAmount}
+                  className="btn-bounce"
                   style={{
                     ...styles.depositButton,
                     opacity: (approval.isPending || !depositAmount) ? 0.5 : 1,
                     cursor: (approval.isPending || !depositAmount) ? 'not-allowed' : 'pointer',
                   }}
-                  whileHover={{ scale: !approval.isPending && depositAmount ? 1.01 : 1, transition: { duration: 0.15 } }}
-                  whileTap={{ scale: !approval.isPending && depositAmount ? 0.98 : 1 }}
                 >
                   {approval.isPending ? 'APPROVING...' : 'APPROVE USDC'}
                 </motion.button>
@@ -228,13 +227,12 @@ export function USDCPool() {
                 <motion.button
                   onClick={handleDeposit}
                   disabled={lottery.isPending || !depositAmount}
+                  className="btn-bounce"
                   style={{
                     ...styles.depositButton,
                     opacity: (lottery.isPending || !depositAmount) ? 0.5 : 1,
                     cursor: (lottery.isPending || !depositAmount) ? 'not-allowed' : 'pointer',
                   }}
-                  whileHover={{ scale: !lottery.isPending && depositAmount ? 1.02 : 1 }}
-                  whileTap={{ scale: !lottery.isPending && depositAmount ? 0.98 : 1 }}
                 >
                   {lottery.isPending ? 'DEPOSITING...' : 'DEPOSIT & PLAY'}
                 </motion.button>

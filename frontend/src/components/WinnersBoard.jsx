@@ -127,11 +127,11 @@ export function WinnersBoard() {
                 initial={{ x: -15, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: index * 0.05, duration: 0.2 }}
+                className="hover-lift"
                 style={{
                   ...styles.row,
                   ...(index === 0 ? styles.firstRow : {}),
                 }}
-                whileHover={{ x: 2, transition: { duration: 0.15 } }}
               >
                 <div style={styles.rowGrid}>
                   <div style={styles.rankCell}>
@@ -176,7 +176,7 @@ export function WinnersBoard() {
 const styles = {
   section: {
     padding: '5rem 1.5rem 6rem',
-    background: 'var(--bg-cream)',
+    background: 'var(--bg-offwhite)',
   },
   container: {
     maxWidth: '1200px',

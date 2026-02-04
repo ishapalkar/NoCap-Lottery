@@ -3,6 +3,7 @@
   /* Whiteboard Colors */
   --bg-cream: #ffffff;
   --bg-paper: #ffffff;
+  --bg-offwhite: #f8f8f8;
   --ink-black: #1a1a1a;
   --marker-cyan: #00d4ff;
   --marker-pink: #ff4d6d;
@@ -220,6 +221,16 @@ p {
 .page-with-header {
   padding-top: 100px;
   min-height: 100vh;
+}
+
+/* Cursor blink animation */
+@keyframes blink {
+  0%, 50% {
+    opacity: 1;
+  }
+  51%, 100% {
+    opacity: 0;
+  }
 }
 
 /* Animations */

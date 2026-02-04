@@ -15,10 +15,10 @@ export function ETHPool() {
         <motion.button
           onClick={() => navigate('/pools')}
           style={styles.backButton}
+          className="btn-bounce"
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.3 }}
-          whileHover={{ x: -3, transition: { duration: 0.15 } }}
         >
           <ArrowLeft size={16} />
           <span>BACK TO POOLS</span>
@@ -44,10 +44,10 @@ export function ETHPool() {
           {/* Left Card - Prize Info */}
           <motion.div
             style={styles.prizeCard}
+            className="card-squishy"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.2 }}
-            whileHover={{ y: -2, transition: { duration: 0.15 } }}
           >
             <div style={styles.prizeHeader}>
               <h2 style={styles.prizeLabel}>CURRENT PRIZE</h2>

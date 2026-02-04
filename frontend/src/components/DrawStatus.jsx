@@ -52,7 +52,7 @@ export function DrawStatus() {
 const styles = {
   section: {
     padding: '3rem 1.5rem 2rem',
-    background: '#ffffff',
+    background: 'var(--bg-offwhite)',
   },
   container: {
     maxWidth: '900px',

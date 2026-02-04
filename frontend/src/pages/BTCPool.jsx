@@ -10,7 +10,7 @@ export function BTCPool() {
   return (
     <div style={styles.container}>
       <div style={styles.content}>
-        <motion.button onClick={() => navigate('/pools')} style={styles.backButton} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }} whileHover={{ x: -3, transition: { duration: 0.15 } }}>
+        <motion.button onClick={() => navigate('/pools')} style={styles.backButton} className="btn-bounce" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }}>
           <ArrowLeft size={16} />
           <span>BACK TO POOLS</span>
         </motion.button>
@@ -25,7 +25,7 @@ export function BTCPool() {
         </motion.div>
 
         <div style={styles.mainGrid}>
-          <motion.div style={styles.prizeCard} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.2 }} whileHover={{ y: -2, transition: { duration: 0.15 } }}>
+          <motion.div style={styles.prizeCard} className="card-squishy" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.2 }}>
             <div style={styles.prizeHeader}>
               <h2 style={styles.prizeLabel}>CURRENT PRIZE</h2>
               <div style={styles.prizeAmount}>$100,000</div>

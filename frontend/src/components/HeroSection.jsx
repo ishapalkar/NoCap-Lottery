@@ -7,7 +7,7 @@ import { FloatingCoins } from './FloatingCoins';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const roles = ['no cap', 'no loss', 'no risk', 'no scam', 'no stress', 'no worries'];
+const roles = ['NO CAP', 'NO LOSS', 'NO RISK', 'ZERO STRESS', 'BIG VIBES', 'PURE PROFIT'];
 
 export function HeroSection() {
   const navigate = useNavigate();
@@ -134,9 +134,9 @@ export function HeroSection() {
         <div style={styles.contentWrapper}>
           {/* Main Title - Center of Screen */}
           <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
+            initial={{scale: 0.9, opacity: 0}}
+            animate={{scale: 1, opacity: 1}}
+            transition={{duration: 0.3, ease: "easeOut"}}
             style={styles.heroTitle}
           >
             <h1 style={styles.mainTitle}>
@@ -144,11 +144,22 @@ export function HeroSection() {
             </h1>
             <motion.h1
               style={{...styles.mainTitle, color: 'var(--marker-pink)'}}
-              animate={{ scale: [1, 1.02, 1] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
+              animate={{scale: [1, 1.02, 1]}}
+              transition={{duration: 1.5, repeat: Infinity}}
             >
               WIN THE POT! 🏆
             </motion.h1>
+            <motion.div
+              style={styles.rotatingTextContainer}
+              key={displayText}
+              initial={{opacity: 0, y: -10}}
+              animate={{opacity: 1, y: 0}}
+              exit={{opacity: 0, y: 10}}
+            >
+              <span style={styles.rotatingText}>
+                {displayText}<span style={styles.cursor}>|</span>
+              </span>
+            </motion.div>
           </motion.div>
 
           <motion.p
@@ -237,12 +248,13 @@ export function HeroSection() {
 const styles = {
   section: {
     position: 'relative',
-    padding: '8rem 1.5rem 4rem',
-    minHeight: '100vh',
+    padding: '6rem 1.5rem 3rem',
+    minHeight: '85vh',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
+    background: '#ffffff',
   },
   container: {
     maxWidth: '1200px',
@@ -260,13 +272,33 @@ const styles = {
   heroTitle: {
     marginBottom: '1rem',
   },
-  mainTitle: {
-    fontSize: 'clamp(3rem, 10vw, 5.5rem)',
+  rotatingTextContainer: {
+    marginTop: '1.5rem',
+    minHeight: '60px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rotatingText: {
+    fontSize: 'clamp(2rem, 6vw, 3.5rem)',
     fontWeight: 900,
-    lineHeight: 1.1,
+    fontFamily: 'Fredoka, sans-serif',
+    color: 'var(--marker-yellow)',
+    textTransform: 'uppercase',
+    letterSpacing: '-0.01em',
+    textShadow: '3px 3px 0 var(--ink-black)',
+  },
+  cursor: {
+    animation: 'blink 1s infinite',
+    marginLeft: '2px',
+  },
+  mainTitle: {
+    fontSize: 'clamp(3.5rem, 12vw, 7rem)',
+    fontWeight: 900,
+    lineHeight: 1,
     color: 'var(--ink-black)',
     fontFamily: 'Fredoka, sans-serif',
-    marginBottom: '1rem',
+    marginBottom: '0.5rem',
     textTransform: 'uppercase',
     letterSpacing: '-0.02em',
   },

@@ -71,22 +71,22 @@ export function Pools() {
         transition={{ duration: 0.3, delay: 0.1 }}
         style={styles.featuresGrid}
       >
-        <motion.div whileHover={{ scale: 1.01, y: -2, transition: { duration: 0.15 } }} style={styles.featureCard} className="card-squishy">
+        <motion.div style={styles.featureCard} className="card-squishy">
           <Shield style={styles.featureIcon} />
           <h3 style={styles.featureTitle}>No Loss</h3>
           <p style={styles.featureText}>Your principal is always safe</p>
         </motion.div>
-        <motion.div whileHover={{ scale: 1.01, y: -2, transition: { duration: 0.15 } }} style={styles.featureCard} className="card-squishy">
+        <motion.div style={styles.featureCard} className="card-squishy">
           <TrendingUp style={styles.featureIcon} />
           <h3 style={styles.featureTitle}>Yield Generation</h3>
           <p style={styles.featureText}>Earn through Aave V3</p>
         </motion.div>
-        <motion.div whileHover={{ scale: 1.01, y: -2, transition: { duration: 0.15 } }} style={styles.featureCard} className="card-squishy">
+        <motion.div style={styles.featureCard} className="card-squishy">
           <Sparkles style={styles.featureIcon} />
           <h3 style={styles.featureTitle}>Fair Winners</h3>
           <p style={styles.featureText}>Chainlink VRF randomness</p>
         </motion.div>
-        <motion.div whileHover={{ scale: 1.01, y: -2, transition: { duration: 0.15 } }} style={styles.featureCard} className="card-squishy">
+        <motion.div style={styles.featureCard} className="card-squishy">
           <Clock style={styles.featureIcon} />
           <h3 style={styles.featureTitle}>Weekly Draws</h3>
           <p style={styles.featureText}>Consistent prize schedule</p>
@@ -101,7 +101,6 @@ export function Pools() {
             initial={{ y: 40, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.3, delay: 0.2 + index * 0.05 }}
-            whileHover={{ scale: 1.01, y: -2, transition: { duration: 0.15 } }}
             style={{
               ...styles.poolCard,
               borderColor: pool.borderColor,
@@ -165,8 +164,7 @@ export function Pools() {
             <motion.button
               onClick={() => pool.status === 'active' && navigate(`/pools/${pool.id}`)}
               disabled={pool.status === 'coming-soon'}
-              whileHover={pool.status === 'active' ? { scale: 1.01, y: -2, transition: { duration: 0.15 } } : {}}
-              whileTap={pool.status === 'active' ? { scale: 0.97 } : {}}
+              className="btn-bounce"
               style={{
                 ...styles.poolButton,
                 background: pool.status === 'active' ? pool.color : 'var(--card-bg)',
@@ -207,7 +205,7 @@ export function Pools() {
               whileInView={{ y: 0, opacity: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: i * 0.1 }}
-              whileHover={{ scale: 1.02, transition: { duration: 0.15 } }}
+              className="card-squishy"
               style={styles.step}
             >
               <div style={styles.stepNumber}>

@@ -113,10 +113,10 @@ export function Dashboard() {
           {/* Your Deposits */}
           <motion.div
             style={styles.statCard}
+            className="card-squishy"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.2 }}
-            whileHover={{ y: -2, transition: { duration: 0.15 } }}
           >
             <div style={styles.statIcon}>💵</div>
             <div style={styles.statLabel}>YOUR DEPOSITS</div>
@@ -127,10 +127,10 @@ export function Dashboard() {
           {/* Pool Shares */}
           <motion.div
             style={styles.statCard}
+            className="card-squishy"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.25 }}
-            whileHover={{ y: -2, transition: { duration: 0.15 } }}
           >
             <div style={styles.statIcon}>🎫</div>
             <div style={styles.statLabel}>YOUR TICKETS</div>
@@ -141,10 +141,10 @@ export function Dashboard() {
           {/* Win Chance */}
           <motion.div
             style={styles.statCard}
+            className="card-squishy"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.3 }}
-            whileHover={{ y: -2, transition: { duration: 0.15 } }}
           >
             <div style={styles.statIcon}>🎯</div>
             <div style={styles.statLabel}>WIN CHANCE</div>
@@ -155,10 +155,10 @@ export function Dashboard() {
           {/* Prize Estimate */}
           <motion.div
             style={styles.statCard}
+            className="card-squishy"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.35 }}
-            whileHover={{ y: -2, transition: { duration: 0.15 } }}
           >
             <div style={styles.statIcon}>🏆</div>
             <div style={styles.statLabel}>PRIZE ESTIMATE</div>
@@ -224,8 +224,7 @@ export function Dashboard() {
             <motion.button
               onClick={() => navigate('/pools/usdc')}
               style={{...styles.actionButton, background: '#00d4ff'}}
-              whileHover={{ scale: 1.02, transition: { duration: 0.15 } }}
-              whileTap={{ scale: 0.98 }}
+              className="btn-bounce"
             >
               <span style={styles.actionIcon}>💰</span>
               <span style={styles.actionText}>Deposit More</span>
@@ -235,8 +234,7 @@ export function Dashboard() {
             <motion.button
               onClick={() => navigate('/withdraw')}
               style={{...styles.actionButton, background: '#ff4d6d'}}
-              whileHover={{ scale: 1.02, transition: { duration: 0.15 } }}
-              whileTap={{ scale: 0.98 }}
+              className="btn-bounce"
             >
               <span style={styles.actionIcon}>🏦</span>
               <span style={styles.actionText}>Withdraw</span>
@@ -246,8 +244,7 @@ export function Dashboard() {
             <motion.button
               onClick={() => navigate('/leaderboard')}
               style={{...styles.actionButton, background: '#ffd23f'}}
-              whileHover={{ scale: 1.02, transition: { duration: 0.15 } }}
-              whileTap={{ scale: 0.98 }}
+              className="btn-bounce"
             >
               <span style={styles.actionIcon}>🏆</span>
               <span style={styles.actionText}>View Winners</span>
@@ -257,8 +254,7 @@ export function Dashboard() {
             <motion.button
               onClick={() => navigate('/pools')}
               style={{...styles.actionButton, background: '#06d6a0'}}
-              whileHover={{ scale: 1.02, transition: { duration: 0.15 } }}
-              whileTap={{ scale: 0.98 }}
+              className="btn-bounce"
             >
               <span style={styles.actionIcon}>🎮</span>
               <span style={styles.actionText}>All Pools</span>
