@@ -5,10 +5,9 @@ import { DrawStatus } from './components/DrawStatus';
 import { ActivePools } from './components/ActivePools';
 import { WinnersBoard } from './components/WinnersBoard';
 import { Pools } from './pages/Pools';
-import { USDCPool } from './pages/USDCPool';
+import { StablecoinsPool } from './pages/StablecoinsPool';
 import { ETHPool } from './pages/ETHPool';
 import { BTCPool } from './pages/BTCPool';
-import { SOLPool } from './pages/SOLPool';
 import { Withdraw } from './pages/Withdraw';
 import { Leaderboard } from './pages/Leaderboard';
 import { Profile } from './pages/Profile';
@@ -55,8 +54,9 @@ function App() {
             </>
           } />
 
-          {/* USDC Pool Route */}
-          <Route path="/pools/usdc" element={<USDCPool />} />
+          {/* Stablecoins Pool Route */}
+          <Route path="/pools/stablecoins" element={<StablecoinsPool />} />
+          <Route path="/pools/usdc" element={<StablecoinsPool />} /> {/* Redirect old URL */}
 
           {/* ETH Pool Route */}
           <Route path="/pools/eth" element={<ETHPool />} />
@@ -64,8 +64,7 @@ function App() {
           {/* BTC Pool Route */}
           <Route path="/pools/btc" element={<BTCPool />} />
 
-          {/* SOL Pool Route */}
-          <Route path="/pools/sol" element={<SOLPool />} />
+          {/* Removed SOL Pool - Not supported yet */}
 
           {/* Withdraw Route */}
           <Route path="/withdraw" element={
