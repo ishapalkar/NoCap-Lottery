@@ -296,13 +296,4 @@ const styles = {
     boxShadow: '3px 3px 0 rgba(0,0,0,0.2)',
     zIndex: 10,
   },
-    borderRadius: '12px',
-    fontFamily: 'Fredoka, sans-serif',
-    fontSize: '1.1rem',
-    fontWeight: 900,
-    cursor: 'pointer',
-    boxShadow: '4px 4px 0 var(--ink-black)',
-    transition: 'all 0.1s cubic-bezier(0.34, 1.56, 0.64, 1)',
-    textTransform: 'uppercase',
-  },
 };
