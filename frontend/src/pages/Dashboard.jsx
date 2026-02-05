@@ -6,6 +6,9 @@ import { Clock, TrendingUp, Users, Trophy, Coins, Calendar, ArrowRight } from 'l
 import { useLotteryPoolUSDC } from '../hooks/useLotteryPoolUSDC';
 import { useUSDCVault } from '../hooks/useUSDCVault';
 import { useCountdown } from '../hooks/useCountdown';
+import { YellowSessionBanner } from '../components/YellowSessionBanner';
+import { Header } from '../components/Header';
+import { FloatingCoins } from '../components/FloatingCoins';
 
 export function Dashboard() {
   const navigate = useNavigate();
@@ -63,6 +66,7 @@ export function Dashboard() {
     <div style={styles.container}>
       <Header />
       <FloatingCoins />
+      <YellowSessionBanner />
       
       <div style={styles.content}>
         {/* Page Title */}

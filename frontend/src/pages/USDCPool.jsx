@@ -11,6 +11,8 @@ import { useLotteryPoolUSDC } from '../hooks/useLotteryPoolUSDC';
 import { useUSDCVault } from '../hooks/useUSDCVault';
 import { useUSDCBalance, useUSDCAllowance, useUSDCApproval } from '../hooks/useUSDCApproval';
 import { useCountdown } from '../hooks/useCountdown';
+import { YellowDepositModal } from '../components/YellowDepositModal';
+import { useYellowNetwork } from '../hooks/useYellowNetwork';
 
 const SEPOLIA_CHAIN_ID = 11155111;
 const LOTTERY_POOL_ADDRESS = import.meta.env.VITE_USDC_LOTTERY;
@@ -23,6 +25,7 @@ export function USDCPool() {
 
   const [depositAmount, setDepositAmount] = useState('');
   const [activeTab, setActiveTab] = useState('RULES');
+  const [showYellowModal, setShowYellowModal] = useState(false);
 
   // Hooks
   const lottery = useLotteryPoolUSDC(address);
@@ -30,6 +33,7 @@ export function USDCPool() {
   const { balance: usdcBalance, refetch: refetchBalance } = useUSDCBalance(address);
   const { allowance, refetch: refetchAllowance } = useUSDCAllowance(address, LOTTERY_POOL_ADDRESS);
   const approval = useUSDCApproval(LOTTERY_POOL_ADDRESS);
+  const { hasActiveSession } = useYellowNetwork();
 
   // Countdown timer
   const depositCountdown = useCountdown(lottery.depositWindowEnd);
@@ -224,24 +228,49 @@ export function USDCPool() {
                   {approval.isPending ? 'APPROVING...' : 'APPROVE USDC'}
                 </motion.button>
               ) : (
-                <motion.button
-                  onClick={handleDeposit}
-                  disabled={lottery.isPending || !depositAmount}
-                  className="btn-bounce"
-                  style={{
-                    ...styles.depositButton,
-                    opacity: (lottery.isPending || !depositAmount) ? 0.5 : 1,
-                    cursor: (lottery.isPending || !depositAmount) ? 'not-allowed' : 'pointer',
-                  }}
-                >
-                  {lottery.isPending ? 'DEPOSITING...' : 'DEPOSIT & PLAY'}
-                </motion.button>
+                <>
+                  <motion.button
+                    onClick={handleDeposit}
+                    disabled={lottery.isPending || !depositAmount}
+                    className="btn-bounce"
+                    style={{
+                      ...styles.depositButton,
+                      opacity: (lottery.isPending || !depositAmount) ? 0.5 : 1,
+                      cursor: (lottery.isPending || !depositAmount) ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    {lottery.isPending ? 'DEPOSITING...' : 'DEPOSIT & PLAY'}
+                  </motion.button>
+
+                  {/* Yellow Network Instant Deposit */}
+                  <motion.button
+                    onClick={() => setShowYellowModal(true)}
+                    className="btn-bounce"
+                    style={styles.yellowButton}
+                    initial={{ scale: 0.95 }}
+                    whileHover={{ scale: 1.02 }}
+                  >
+                    ⚡ {hasActiveSession ? 'INSTANT DEPOSIT' : 'YELLOW SESSION'}
+                  </motion.button>
+                </>
               )}
 
               <button style={styles.switchLink}>Switch to Withdraw</button>
             </div>
           </motion.div>
         </div>
+
+        {/* Yellow Deposit Modal */}
+        <YellowDepositModal
+          isOpen={showYellowModal}
+          onClose={() => setShowYellowModal(false)}
+          poolAddress={LOTTERY_POOL_ADDRESS}
+          poolName="Weekly USDC Pool"
+          onSuccess={() => {
+            refetchBalance();
+            vault.refetch?.();
+          }}
+        />
 
         {/* Tabs */}
         <motion.div
@@ -627,6 +656,23 @@ const styles = {
     letterSpacing: '0.5px',
     boxShadow: '6px 6px 0 #1a1a1a',
     transition: 'all 0.15s',
+  },
+  yellowButton: {
+    width: '100%',
+    fontFamily: '"Fredoka", sans-serif',
+    fontSize: '16px',
+    fontWeight: '900',
+    color: '#1a1a1a',
+    background: 'linear-gradient(135deg, #ffd23f 0%, #ffed4e 100%)',
+    border: '4px solid #1a1a1a',
+    borderRadius: '12px',
+    padding: '14px',
+    cursor: 'pointer',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+    boxShadow: '6px 6px 0 #1a1a1a',
+    transition: 'all 0.15s',
+    marginTop: '8px',
   },
   switchLink: {
     fontFamily: '"Comic Neue", cursive',

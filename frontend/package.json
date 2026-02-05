@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@erc7824/nitrolite": "^0.5.3",
     "@lifi/sdk": "^3.15.4",
     "@rainbow-me/rainbowkit": "^2.2.10",
     "@tanstack/react-query": "^5.90.20",
@@ -21,7 +22,8 @@
     "react-router-dom": "^7.13.0",
     "react-spring": "^10.0.3",
     "viem": "^2.45.1",
-    "wagmi": "^2.12.0"
+    "wagmi": "^2.12.0",
+    "yellow-ts": "^0.0.10"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",
