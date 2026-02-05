@@ -233,8 +233,8 @@ const styles = {
     flexShrink: 0,
   },
   profileAvatar: {
-    width: '5rem',
-    height: '5rem',
+    width: '6rem',
+    height: '6rem',
     background: 'var(--marker-cyan)',
     border: '4px solid var(--ink-black)',
     borderRadius: '12px 4px 12px 4px / 4px 12px 4px 12px',
@@ -243,6 +243,7 @@ const styles = {
     justifyContent: 'center',
     boxShadow: '5px 5px 0px var(--ink-black)',
     transform: 'rotate(-3deg)',
+    overflow: 'hidden',
   },
   profileInfo: {
     flex: 1,
@@ -406,7 +407,6 @@ const styles = {
   ensAvatarImg: {
     width: '100%',
     height: '100%',
-    borderRadius: '50%',
     objectFit: 'cover',
   },
   ensBadgeProfile: {

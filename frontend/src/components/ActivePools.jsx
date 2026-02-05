@@ -6,44 +6,38 @@ export function ActivePools() {
   
   const pools = [
     {
-      id: 'usdc',
-      name: 'Cosmic USDC Vault',
+      id: 'stablecoins',
+      name: 'Stablecoin Vault',
       icon: '$',
-      token: 'USDC',
+      token: 'USDC/USDT/DAI',
       pot: '$50,000',
       boost: '+12.5%',
       boostPercent: 35,
       bgColor: '#ffd23f',
+      isActive: true,
     },
     {
       id: 'eth',
-      name: 'Nebula ETH Pool',
+      name: 'ETH Pool',
       icon: '≡',
       token: 'ETH',
       pot: '$25,000',
       boost: '+8.2%',
       boostPercent: 28,
-      bgColor: '#ffd23f',
+      bgColor: '#00d4ff',
+      isActive: true,
     },
     {
       id: 'btc',
-      name: '8-Bit BTC Arena',
+      name: 'BTC Pool',
       icon: '₿',
       token: 'WBTC',
       pot: '$100,000',
       boost: '+5.5%',
       boostPercent: 22,
-      bgColor: '#ffd23f',
-    },
-    {
-      id: 'sol',
-      name: 'Solana Speedrun',
-      icon: '◎',
-      token: 'SOL',
-      pot: '$15,000',
-      boost: '+14.2%',
-      boostPercent: 40,
-      bgColor: '#ffd23f',
+      bgColor: '#ff6b6b',
+      isActive: false,
+      comingSoon: true,
     },
   ];
 
@@ -70,6 +64,13 @@ export function ActivePools() {
               className="card-squishy"
               style={styles.poolCard}
             >
+              {/* Coming Soon Badge */}
+              {pool.comingSoon && (
+                <div style={styles.comingSoonBadge}>
+                  🚀 COMING SOON
+                </div>
+              )}
+              
               {/* Icon */}
               <div style={{ ...styles.poolIcon, background: pool.bgColor }}>
                 <span style={styles.iconText}>{pool.icon}</span>
@@ -104,10 +105,14 @@ export function ActivePools() {
               {/* Go Play Button */}
               <motion.button
                 className="btn-bounce"
-                onClick={() => navigate(`/pools/${pool.id}`)}
-                style={styles.playButton}
+                onClick={() => pool.isActive ? navigate(`/pools/${pool.id}`) : null}
+                style={{
+                  ...styles.playButton,
+                  ...(pool.comingSoon && styles.playButtonDisabled),
+                }}
+                disabled={pool.comingSoon}
               >
-                GO PLAY!
+                {pool.comingSoon ? 'COMING SOON' : 'GO PLAY!'}
               </motion.button>
             </motion.div>
           ))}
@@ -261,6 +266,36 @@ const styles = {
     background: 'var(--marker-cyan)',
     color: 'white',
     border: '4px solid var(--ink-black)',
+    borderRadius: '10px',
+    fontSize: '1rem',
+    fontFamily: 'Fredoka, sans-serif',
+    fontWeight: 900,
+    cursor: 'pointer',
+    boxShadow: '4px 4px 0 var(--ink-black)',
+    transition: 'all 0.1s ease',
+  },
+  playButtonDisabled: {
+    background: '#cccccc',
+    cursor: 'not-allowed',
+    opacity: 0.6,
+  },
+  comingSoonBadge: {
+    position: 'absolute',
+    top: '12px',
+    right: '12px',
+    background: 'linear-gradient(135deg, #ff6b6b 0%, #ff4d6d 100%)',
+    color: 'white',
+    padding: '6px 12px',
+    borderRadius: '8px',
+    border: '2px solid var(--ink-black)',
+    fontSize: '0.7rem',
+    fontFamily: 'Fredoka, sans-serif',
+    fontWeight: '900',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+    boxShadow: '3px 3px 0 rgba(0,0,0,0.2)',
+    zIndex: 10,
+  },
     borderRadius: '12px',
     fontFamily: 'Fredoka, sans-serif',
     fontSize: '1.1rem',

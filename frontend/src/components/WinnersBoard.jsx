@@ -294,7 +294,7 @@ const styles = {
   addressCell: {
     display: 'flex',
     alignItems: 'center',
-    gap: '0.5rem',
+    gap: '0.75rem',
   },
   address: {
     fontFamily: 'monospace',
@@ -308,11 +308,12 @@ const styles = {
     gap: '0.5rem',
   },
   ensAvatar: {
-    width: '32px',
-    height: '32px',
+    width: '36px',
+    height: '36px',
     borderRadius: '50%',
     border: '3px solid var(--marker-cyan)',
     objectFit: 'cover',
+    flexShrink: 0,
   },
   ensBadge: {
     fontFamily: 'Fredoka, sans-serif',

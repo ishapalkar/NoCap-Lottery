@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { CustomConnectButton } from './CustomConnectButton';
 import { Trophy } from 'lucide-react';
 
 export function Header() {
@@ -68,7 +68,7 @@ export function Header() {
         </nav>
 
         <div style={styles.walletButton}>
-          <ConnectButton />
+          <CustomConnectButton />
         </div>
       </div>
     </header>

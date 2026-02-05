@@ -2,7 +2,119 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useLotteryPoolUSDC } from '../hooks/useLotteryPoolUSDC';
+import { useEns } from '../hooks/useEns';
 import { Trophy, Calendar, DollarSign, Users, TrendingUp, Award, Crown, Medal, ArrowLeft, Filter } from 'lucide-react';
+
+// ENS-enabled Winner Card Component
+function WinnerCard({ winner, index, getRankEmoji, getRankColor, selectedRound, setSelectedRound }) {
+  const { displayName, ensAvatar, hasEnsName } = useEns(winner.winner);
+
+  return (
+    <motion.div
+      key={winner.round}
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 20 }}
+      transition={{ duration: 0.2, delay: index * 0.05 }}
+      style={{
+        ...styles.winnerCard,
+        borderColor: index < 3 ? getRankColor(index) : 'var(--ink-black)',
+      }}
+      onClick={() => setSelectedRound(selectedRound === winner.round ? null : winner.round)}
+      className="hover-lift"
+    >
+      {/* Rank Badge */}
+      <div style={{
+        ...styles.rankBadge,
+        background: getRankColor(index),
+      }}>
+        <span style={styles.rankEmoji}>{getRankEmoji(index)}</span>
+        <span style={styles.rankNumber}>#{index + 1}</span>
+      </div>
+
+      {/* Winner Info */}
+      <div style={styles.winnerInfo}>
+        <div style={styles.winnerHeader}>
+          <div style={styles.winnerDetails}>
+            <p style={styles.roundLabel}>Round #{winner.round}</p>
+            <div style={styles.addressWithAvatar}>
+              {ensAvatar && (
+                <img 
+                  src={ensAvatar} 
+                  alt="ENS Avatar" 
+                  style={styles.ensAvatar}
+                />
+              )}
+              <p style={styles.winnerAddress}>
+                {displayName}
+                {hasEnsName && <span style={styles.ensBadge}>ENS</span>}
+              </p>
+            </div>
+          </div>
+          <div style={styles.prizeBox}>
+            <DollarSign size={24} color="#06d6a0" />
+            <span style={styles.prizeAmount}>${winner.prizeAmount.toLocaleString()}</span>
+          </div>
+        </div>
+
+        <div style={styles.winnerMeta}>
+          <span style={styles.metaItem}>
+            <Calendar size={16} />
+            {winner.drawDate}
+          </span>
+          <span style={styles.metaItem}>
+            <Users size={16} />
+            {winner.participants} participants
+          </span>
+          <span style={styles.metaItem}>
+            <TrendingUp size={16} />
+            ${winner.totalDeposits.toLocaleString()} TVL
+          </span>
+        </div>
+
+        {/* Expanded Details */}
+        <AnimatePresence>
+          {selectedRound === winner.round && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              style={styles.expandedDetails}
+            >
+              <div style={styles.detailsDivider} />
+              <div style={styles.detailsGrid}>
+                <div style={styles.detailBox}>
+                  <p style={styles.detailLabel}>Win Chance</p>
+                  <p style={styles.detailValue}>
+                    {((1 / winner.participants) * 100).toFixed(4)}%
+                  </p>
+                </div>
+                <div style={styles.detailBox}>
+                  <p style={styles.detailLabel}>Their Deposit</p>
+                  <p style={styles.detailValue}>
+                    ${(winner.totalDeposits / winner.participants).toFixed(2)}
+                  </p>
+                </div>
+                <div style={styles.detailBox}>
+                  <p style={styles.detailLabel}>Tickets Held</p>
+                  <p style={styles.detailValue}>
+                    {Math.floor(winner.totalDeposits / winner.participants / 10)}
+                  </p>
+                </div>
+                <div style={styles.detailBox}>
+                  <p style={styles.detailLabel}>Prize Multiplier</p>
+                  <p style={styles.detailValue}>
+                    {(winner.prizeAmount / (winner.totalDeposits / winner.participants)).toFixed(2)}x
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </motion.div>
+  );
+}
 
 export const Leaderboard = () => {
   const navigate = useNavigate();
@@ -263,99 +375,17 @@ export const Leaderboard = () => {
         
         <AnimatePresence mode="popLayout">
           {filteredWinners.map((winner, index) => (
-            <motion.div
+            <WinnerCard
               key={winner.round}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              transition={{ duration: 0.2, delay: index * 0.05 }}
-              style={{
-                ...styles.winnerCard,
-                borderColor: index < 3 ? getRankColor(index) : 'var(--ink-black)',
-              }}
-              onClick={() => setSelectedRound(selectedRound === winner.round ? null : winner.round)}
-              className="hover-lift"
-            >
-              {/* Rank Badge */}
-              <div style={{
-                ...styles.rankBadge,
-                background: getRankColor(index),
-              }}>
-                <span style={styles.rankEmoji}>{getRankEmoji(index)}</span>
-                <span style={styles.rankNumber}>#{index + 1}</span>
-              </div>
-
-              {/* Winner Info */}
-              <div style={styles.winnerInfo}>
-                <div style={styles.winnerHeader}>
-                  <div>
-                    <p style={styles.roundLabel}>Round #{winner.round}</p>
-                    <p style={styles.winnerAddress}>{winner.shortAddress}</p>
-                  </div>
-                  <div style={styles.prizeBox}>
-                    <DollarSign size={24} color="#06d6a0" />
-                    <span style={styles.prizeAmount}>${winner.prizeAmount.toLocaleString()}</span>
-                  </div>
-                </div>
-
-                <div style={styles.winnerMeta}>
-                  <span style={styles.metaItem}>
-                    <Calendar size={16} />
-                    {winner.drawDate}
-                  </span>
-                  <span style={styles.metaItem}>
-                    <Users size={16} />
-                    {winner.participants} participants
-                  </span>
-                  <span style={styles.metaItem}>
-                    <TrendingUp size={16} />
-                    ${winner.totalDeposits.toLocaleString()} TVL
-                  </span>
-                </div>
-
-                {/* Expanded Details */}
-                <AnimatePresence>
-                  {selectedRound === winner.round && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      style={styles.expandedDetails}
-                    >
-                      <div style={styles.detailsDivider} />
-                      <div style={styles.detailsGrid}>
-                        <div style={styles.detailBox}>
-                          <p style={styles.detailLabel}>Win Chance</p>
-                          <p style={styles.detailValue}>
-                            {((1 / winner.participants) * 100).toFixed(4)}%
-                          </p>
-                        </div>
-                        <div style={styles.detailBox}>
-                          <p style={styles.detailLabel}>Their Deposit</p>
-                          <p style={styles.detailValue}>
-                            ${(winner.totalDeposits / winner.participants).toFixed(2)}
-                          </p>
-                        </div>
-                        <div style={styles.detailBox}>
-                          <p style={styles.detailLabel}>Tickets Held</p>
-                          <p style={styles.detailValue}>
-                            {Math.floor(winner.totalDeposits / winner.participants / 10)}
-                          </p>
-                        </div>
-                        <div style={styles.detailBox}>
-                          <p style={styles.detailLabel}>Prize Multiplier</p>
-                          <p style={styles.detailValue}>
-                            {(winner.prizeAmount / (winner.totalDeposits / winner.participants)).toFixed(2)}x
-                          </p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          window.open(`https://basescan.org/address/${winner.winner}`, '_blank');
-                        }}
-                        style={styles.viewOnExplorerButton}
-                        className="btn-bounce"
+              winner={winner}
+              index={index}
+              getRankEmoji={getRankEmoji}
+              getRankColor={getRankColor}
+              selectedRound={selectedRound}
+              setSelectedRound={setSelectedRound}
+            />
+          ))}
+        </AnimatePresence>
                       >
                         🔍 View on BaseScan
                       </button>
@@ -621,6 +651,40 @@ const styles = {
     fontWeight: 900,
     color: 'var(--ink-black)',
     margin: 0,
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+  },
+  addressWithAvatar: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+  },
+  ensAvatar: {
+    width: '40px',
+    height: '40px',
+    borderRadius: '50%',
+    border: '3px solid var(--marker-cyan)',
+    objectFit: 'cover',
+    flexShrink: 0,
+  },
+  ensBadge: {
+    fontFamily: 'Fredoka, sans-serif',
+    fontSize: '0.7rem',
+    fontWeight: '900',
+    color: 'white',
+    background: 'linear-gradient(135deg, #5298FF 0%, #3B7EEE 100%)',
+    padding: '2px 8px',
+    borderRadius: '6px',
+    border: '2px solid var(--ink-black)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+    marginLeft: '8px',
+  },
+  winnerDetails: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
   },
   prizeBox: {
     display: 'flex',

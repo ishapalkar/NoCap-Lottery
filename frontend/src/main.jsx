@@ -25,6 +25,10 @@ createRoot(document.getElementById('root')).render(
           })}
           initialChain={sepolia}
           modalSize="compact"
+          avatar={{
+            // Use Sepolia for ENS resolution in RainbowKit modals
+            chainId: sepolia.id,
+          }}
         >
           <BrowserRouter>
             <App />
