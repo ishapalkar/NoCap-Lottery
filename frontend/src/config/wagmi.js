@@ -28,13 +28,13 @@ export const config = getDefaultConfig({
   ],
   ssr: false, // If using Next.js, set to true
   transports: {
-    [mainnet.id]: http(),
-    [arbitrum.id]: http(),
-    [optimism.id]: http(),
-    [base.id]: http(),
-    [baseSepolia.id]: http(),
-    [sepolia.id]: http(),
-    [arbitrumSepolia.id]: http(),
-    [optimismSepolia.id]: http(),
+    [mainnet.id]: http('https://eth.llamarpc.com'),
+    [arbitrum.id]: http('https://arbitrum.llamarpc.com'),
+    [optimism.id]: http('https://optimism.llamarpc.com'),
+    [base.id]: http('https://base.llamarpc.com'),
+    [baseSepolia.id]: http('https://base-sepolia.blockpi.network/v1/rpc/public'),
+    [sepolia.id]: http('https://ethereum-sepolia.publicnode.com'),
+    [arbitrumSepolia.id]: http('https://arbitrum-sepolia.blockpi.network/v1/rpc/public'),
+    [optimismSepolia.id]: http('https://optimism-sepolia.blockpi.network/v1/rpc/public'),
   },
 });

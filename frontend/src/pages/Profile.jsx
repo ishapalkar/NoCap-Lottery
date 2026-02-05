@@ -105,7 +105,6 @@ export function Profile() {
               <ExternalLink style={{ width: '1rem', height: '1rem' }} />
             </button>
           </div>
-          </div>
         </div>
         {copied && <div style={styles.copiedNotification}>Copied!</div>}
       </div>
