@@ -1,9 +1,11 @@
 import { useAccount } from 'wagmi';
-import { User, Copy, ExternalLink } from 'lucide-react';
+import { User, Copy, ExternalLink, Award } from 'lucide-react';
 import { useState } from 'react';
+import { useUserEns } from '../hooks/useEns';
 
 export function Profile() {
   const { address, isConnected } = useAccount();
+  const { displayName, ensAvatar, hasEnsName, isPremiumUser, isLoading } = useUserEns(address);
   const [copied, setCopied] = useState(false);
   const [hoveredCard, setHoveredCard] = useState(null);
 
@@ -56,16 +58,31 @@ export function Profile() {
       <div style={styles.profileHeader}>
         <div style={styles.profileAvatarContainer}>
           <div style={styles.profileAvatar}>
-            <User style={{ width: '2.5rem', height: '2.5rem', color: 'var(--ink-black)' }} />
+            {ensAvatar ? (
+              <img 
+                src={ensAvatar} 
+                alt="ENS Avatar" 
+                style={styles.ensAvatarImg}
+              />
+            ) : (
+              <User style={{ width: '2.5rem', height: '2.5rem', color: 'var(--ink-black)' }} />
+            )}
           </div>
+          {hasEnsName && (
+            <div style={styles.ensBadgeProfile}>
+              <Award size={14} />
+              ENS
+            </div>
+          )}
         </div>
         <div style={styles.profileInfo}>
-          <h1 style={styles.profileTitle}>Your Profile</h1>
+          <div style={styles.nameContainer}>
+            <h1 style={styles.profileTitle}>
+              {isLoading ? 'Loading...' : displayName}
+            </h1>
+            {hasEnsName && <span style={styles.premiumBadge}>✨ Premium</span>}
+          </div>
           <div style={styles.addressContainer}>
-            <code style={styles.addressText}>
-              {address?.substring(0, 6)}...{address?.substring(address.length - 4)}
-            </code>
-        <div style={styles.addressContainer}>
             <code style={styles.addressText}>
               {address?.substring(0, 6)}...{address?.substring(address.length - 4)}
             </code>
@@ -386,6 +403,49 @@ const styles = {
     fontWeight: 700,
     fontSize: '1.125rem',
     marginLeft: '1rem',
+  },
+  ensAvatarImg: {
+    width: '100%',
+    height: '100%',
+    borderRadius: '50%',
+    objectFit: 'cover',
+  },
+  ensBadgeProfile: {
+    position: 'absolute',
+    bottom: '-8px',
+    right: '-8px',
+    background: 'linear-gradient(135deg, #5298FF 0%, #3B7EEE 100%)',
+    color: 'white',
+    padding: '4px 10px',
+    borderRadius: '12px',
+    border: '3px solid var(--ink-black)',
+    fontSize: '0.75rem',
+    fontFamily: 'Fredoka, sans-serif',
+    fontWeight: '900',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+    boxShadow: '3px 3px 0 rgba(0,0,0,0.2)',
+  },
+  nameContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    marginBottom: '0.5rem',
+  },
+  premiumBadge: {
+    background: 'linear-gradient(135deg, #ffd23f 0%, #ffed4e 100%)',
+    color: 'var(--ink-black)',
+    padding: '4px 12px',
+    borderRadius: '8px',
+    border: '2px solid var(--ink-black)',
+    fontSize: '0.85rem',
+    fontFamily: 'Fredoka, sans-serif',
+    fontWeight: '900',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
   },
   '@media (max-width: 768px)': {
     profileHeader: {

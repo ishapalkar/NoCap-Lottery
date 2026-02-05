@@ -1,6 +1,62 @@
 import { useState, useEffect } from 'react';
 import { Trophy, ExternalLink } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useEns } from '../hooks/useEns';
+
+// ENS-enabled Winner Row Component
+function WinnerRow({ winner, index }) {
+  const { displayName, ensAvatar, hasEnsName } = useEns(winner.address);
+
+  return (
+    <motion.div
+      key={winner.id}
+      initial={{ x: -15, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      transition={{ delay: index * 0.05, duration: 0.2 }}
+      className="hover-lift"
+      style={{
+        ...styles.row,
+        ...(index === 0 ? styles.firstRow : {}),
+      }}
+    >
+      <div style={styles.rowGrid}>
+        <div style={styles.rankCell}>
+          <motion.span
+            animate={{ rotate: [0, -8, 8, -8, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 2 }}
+            style={styles.emoji}
+          >
+            {winner.emoji}
+          </motion.span>
+          <span style={styles.rankNumber}>#{winner.rank}</span>
+        </div>
+
+        <div style={styles.addressCell}>
+          {ensAvatar && (
+            <img 
+              src={ensAvatar} 
+              alt="ENS Avatar" 
+              style={styles.ensAvatar}
+            />
+          )}
+          <span style={styles.address}>
+            {displayName}
+            {hasEnsName && <span style={styles.ensBadge}>ENS</span>}
+          </span>
+          <ExternalLink style={styles.icon} />
+        </div>
+
+        <span style={styles.prize}>{winner.prize}</span>
+
+        <span style={styles.multiplier}>{winner.multiplier}x</span>
+
+        <span style={styles.blockchain}>{winner.blockchain}</span>
+
+        <span style={styles.time}>{winner.time}</span>
+      </div>
+    </motion.div>
+  );
+}
 
 const initialWinners = [
   {
@@ -122,43 +178,7 @@ export function WinnersBoard() {
 
           <div>
             {winners.map((winner, index) => (
-              <motion.div
-                key={winner.id}
-                initial={{ x: -15, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: index * 0.05, duration: 0.2 }}
-                className="hover-lift"
-                style={{
-                  ...styles.row,
-                  ...(index === 0 ? styles.firstRow : {}),
-                }}
-              >
-                <div style={styles.rowGrid}>
-                  <div style={styles.rankCell}>
-                    <motion.span
-                      animate={{ rotate: [0, -8, 8, -8, 0] }}
-                      transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 2 }}
-                      style={styles.emoji}
-                    >
-                      {winner.emoji}
-                    </motion.span>
-                    <span style={styles.rankNumber}>#{winner.rank}</span>
-                  </div>
-
-                  <div style={styles.addressCell}>
-                    <span style={styles.address}>{winner.address}</span>
-                    <ExternalLink style={styles.icon} />
-                  </div>
-
-                  <span style={styles.prize}>{winner.prize}</span>
-
-                  <span style={styles.multiplier}>{winner.multiplier}x</span>
-
-                  <span style={styles.blockchain}>{winner.blockchain}</span>
-
-                  <span style={styles.time}>{winner.time}</span>
-                </div>
-              </motion.div>
+              <WinnerRow key={winner.id} winner={winner} index={index} />
             ))}
           </div>
 
@@ -283,6 +303,28 @@ const styles = {
     textOverflow: 'ellipsis',
     fontWeight: 700,
     color: 'var(--ink-black)',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+  },
+  ensAvatar: {
+    width: '32px',
+    height: '32px',
+    borderRadius: '50%',
+    border: '3px solid var(--marker-cyan)',
+    objectFit: 'cover',
+  },
+  ensBadge: {
+    fontFamily: 'Fredoka, sans-serif',
+    fontSize: '0.7rem',
+    fontWeight: '900',
+    color: 'white',
+    background: 'linear-gradient(135deg, #5298FF 0%, #3B7EEE 100%)',
+    padding: '2px 8px',
+    borderRadius: '6px',
+    border: '2px solid var(--ink-black)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
   },
   icon: {
     height: '1rem',
