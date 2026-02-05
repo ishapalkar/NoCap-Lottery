@@ -5,26 +5,27 @@ button[data-testid="rk-connect-button"],
 div[data-rk] button {
   background: var(--marker-cyan) !important;
   color: var(--ink-black) !important;
-  border: 4px solid var(--ink-black) !important;
-  border-radius: 12px !important;
+  border: 3px solid var(--ink-black) !important;
+  border-radius: 10px !important;
   font-family: 'Fredoka', sans-serif !important;
   font-weight: 700 !important;
-  font-size: 16px !important;
-  padding: 12px 24px !important;
-  box-shadow: 5px 5px 0 var(--ink-black) !important;
+  font-size: 14px !important;
+  padding: 10px 20px !important;
+  height: 44px !important;
+  box-shadow: 4px 4px 0 var(--ink-black) !important;
   transition: all 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55) !important;
   text-transform: uppercase !important;
 }
 
 button[data-testid="rk-connect-button"]:hover,
 div[data-rk] button:hover {
-  transform: translateY(-3px) rotate(-1deg) !important;
-  box-shadow: 7px 7px 0 var(--ink-black) !important;
+  transform: translateY(-2px) rotate(-1deg) !important;
+  box-shadow: 6px 6px 0 var(--ink-black) !important;
 }
 
 button[data-testid="rk-connect-button"]:active,
 div[data-rk] button:active {
-  transform: translateY(2px) !important;
+  transform: translateY(1px) !important;
   box-shadow: 2px 2px 0 var(--ink-black) !important;
 }
 
@@ -76,18 +77,24 @@ div[data-rk] button[aria-label*="Chain"] {
   background: var(--marker-yellow) !important;
   border: 3px solid var(--ink-black) !important;
   box-shadow: 4px 4px 0 var(--ink-black) !important;
+  height: 44px !important;
+  padding: 8px 16px !important;
+  font-size: 14px !important;
 }
 
 /* Account button */
 button[data-testid="rk-account-button"] {
   background: var(--marker-yellow) !important;
-  border: 4px solid var(--ink-black) !important;
-  box-shadow: 5px 5px 0 var(--ink-black) !important;
+  border: 3px solid var(--ink-black) !important;
+  box-shadow: 4px 4px 0 var(--ink-black) !important;
+  height: 44px !important;
+  padding: 8px 16px !important;
+  font-size: 14px !important;
 }
 
 button[data-testid="rk-account-button"]:hover {
-  transform: translateY(-3px) rotate(1deg) !important;
-  box-shadow: 7px 7px 0 var(--ink-black) !important;
+  transform: translateY(-2px) rotate(1deg) !important;
+  box-shadow: 6px 6px 0 var(--ink-black) !important;
 }
 
 /* Close button */

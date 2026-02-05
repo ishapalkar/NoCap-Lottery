@@ -85,12 +85,13 @@ const styles = {
     marginBottom: '2rem',
   },
   container: {
-    maxWidth: '1200px',
+    maxWidth: '1400px',
     margin: '0 auto',
-    display: 'flex',
+    display: 'grid',
+    gridTemplateColumns: 'minmax(150px, auto) 1fr minmax(200px, auto)',
     height: '5rem',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: '1rem',
     padding: '0 1.5rem',
     background: 'white',
     borderWidth: '3px',
@@ -105,6 +106,7 @@ const styles = {
     gap: '0.5rem',
     cursor: 'pointer',
     transition: 'transform 0.2s ease',
+    justifySelf: 'start',
   },
   logoIcon: {
     width: '2.5rem',
@@ -130,7 +132,9 @@ const styles = {
   nav: {
     display: 'flex',
     alignItems: 'center',
-    gap: '2rem',
+    justifyContent: 'center',
+    gap: '1.5rem',
+    width: '100%',
   },
   navLink: {
     fontSize: '0.875rem',
@@ -143,6 +147,7 @@ const styles = {
     cursor: 'pointer',
     fontFamily: 'Fredoka, sans-serif',
     position: 'relative',
+    whiteSpace: 'nowrap',
   },
   navLinkActive: {
     color: 'var(--marker-pink)',
@@ -153,5 +158,6 @@ const styles = {
   walletButton: {
     display: 'flex',
     alignItems: 'center',
+    justifyContent: 'flex-end',
   },
 };
