@@ -62,7 +62,7 @@ const initialWinners = [
   {
     id: 1,
     rank: 1,
-    address: '0x1a2b...9c8d',
+    address: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
     prize: '2.8 ETH',
     multiplier: 85,
     blockchain: 'Ethereum',
@@ -72,7 +72,7 @@ const initialWinners = [
   {
     id: 2,
     rank: 2,
-    address: '0x5f4e...3b2a',
+    address: '0x225f137127d9067788314bc7fcc1f36746a3c3B5',
     prize: '1,250 MATIC',
     multiplier: 62,
     blockchain: 'Polygon',
@@ -82,7 +82,7 @@ const initialWinners = [
   {
     id: 3,
     rank: 3,
-    address: '0x9k8j...7h6g',
+    address: '0x983110309620D911731Ac0932219af06091b6744',
     prize: '125 SOL',
     multiplier: 50,
     blockchain: 'Solana',
@@ -92,7 +92,7 @@ const initialWinners = [
   {
     id: 4,
     rank: 4,
-    address: '0x2m3n...1l0k',
+    address: '0xb8c2C29ee19D8307cb7255e1Cd9CbDE883A267d5',
     prize: '15 BNB',
     multiplier: 48,
     blockchain: 'BNB Chain',
@@ -102,7 +102,7 @@ const initialWinners = [
   {
     id: 5,
     rank: 5,
-    address: '0x7p6q...5o4n',
+    address: '0x0904Dac3347eA47d208F3Fd67402D039a3b99859',
     prize: '3.2 ETH',
     multiplier: 45,
     blockchain: 'Ethereum',

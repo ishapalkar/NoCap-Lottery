@@ -139,8 +139,8 @@ export const Leaderboard = () => {
   const [winners, setWinners] = useState([
     {
       round: 12,
-      winner: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
-      shortAddress: '0x742d...0bEb',
+      winner: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
+      shortAddress: '0xd8dA...6045',
       prizeAmount: 52340,
       timestamp: Date.now() - 7 * 24 * 60 * 60 * 1000,
       participants: 523,
@@ -149,8 +149,8 @@ export const Leaderboard = () => {
     },
     {
       round: 11,
-      winner: '0x9F8a8E4C3B2D1A0B7C6D5E4F3A2B1C0D9E8F7A6',
-      shortAddress: '0x9F8a...7A6',
+      winner: '0x225f137127d9067788314bc7fcc1f36746a3c3B5',
+      shortAddress: '0x225f...c3B5',
       prizeAmount: 48750,
       timestamp: Date.now() - 14 * 24 * 60 * 60 * 1000,
       participants: 487,
@@ -159,8 +159,8 @@ export const Leaderboard = () => {
     },
     {
       round: 10,
-      winner: '0x1A2B3C4D5E6F7A8B9C0D1E2F3A4B5C6D7E8F9A0',
-      shortAddress: '0x1A2B...9A0',
+      winner: '0x983110309620D911731Ac0932219af06091b6744',
+      shortAddress: '0x9831...6744',
       prizeAmount: 55890,
       timestamp: Date.now() - 21 * 24 * 60 * 60 * 1000,
       participants: 558,
@@ -169,8 +169,8 @@ export const Leaderboard = () => {
     },
     {
       round: 9,
-      winner: '0xABCDEF123456789ABCDEF123456789ABCDEF1234',
-      shortAddress: '0xABCD...1234',
+      winner: '0xb8c2C29ee19D8307cb7255e1Cd9CbDE883A267d5',
+      shortAddress: '0xb8c2...67d5',
       prizeAmount: 49320,
       timestamp: Date.now() - 28 * 24 * 60 * 60 * 1000,
       participants: 493,
@@ -179,8 +179,8 @@ export const Leaderboard = () => {
     },
     {
       round: 8,
-      winner: '0x7654321FEDCBA9876543210FEDCBA987654321F',
-      shortAddress: '0x7654...321F',
+      winner: '0x0904Dac3347eA47d208F3Fd67402D039a3b99859',
+      shortAddress: '0x0904...9859',
       prizeAmount: 61240,
       timestamp: Date.now() - 35 * 24 * 60 * 60 * 1000,
       participants: 612,
@@ -189,8 +189,8 @@ export const Leaderboard = () => {
     },
     {
       round: 7,
-      winner: '0x8E9F0A1B2C3D4E5F6A7B8C9D0E1F2A3B4C5D6E7',
-      shortAddress: '0x8E9F...D6E7',
+      winner: '0x4Bfa5D2f3f6E8A0aE2c9eF4A67B3D8C9E6F5A4B3',
+      shortAddress: '0x4Bfa...5A4B3',
       prizeAmount: 47560,
       timestamp: Date.now() - 42 * 24 * 60 * 60 * 1000,
       participants: 475,
@@ -199,8 +199,8 @@ export const Leaderboard = () => {
     },
     {
       round: 6,
-      winner: '0xDEADBEEF1234567890ABCDEF1234567890ABCD',
-      shortAddress: '0xDEAD...ABCD',
+      winner: '0xD1D84F0e28D6fedF03c73151f98dF95139700aa7',
+      shortAddress: '0xD1D8...00aa7',
       prizeAmount: 58920,
       timestamp: Date.now() - 49 * 24 * 60 * 60 * 1000,
       participants: 589,
@@ -209,8 +209,8 @@ export const Leaderboard = () => {
     },
     {
       round: 5,
-      winner: '0xCAFEBABE9876543210FEDCBA9876543210FEDC',
-      shortAddress: '0xCAFE...FEDC',
+      winner: '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984',
+      shortAddress: '0x1f98...F984',
       prizeAmount: 44870,
       timestamp: Date.now() - 56 * 24 * 60 * 60 * 1000,
       participants: 448,
