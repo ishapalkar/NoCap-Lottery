@@ -1,27 +1,27 @@
 import { useEnsName, useEnsAvatar, useChainId } from 'wagmi';
 import { normalize } from 'viem/ens';
-import { mainnet } from 'wagmi/chains';
+import { sepolia } from 'wagmi/chains';
 
 /**
  * Custom hook to fetch ENS name and avatar for an address
- * ENS only works on Ethereum mainnet - disabled on testnets to avoid CORS issues
+ * ENS configured for Sepolia testnet
  */
 export function useEns(address) {
   const chainId = useChainId();
-  const isMainnet = chainId === mainnet.id;
+  const isSepolia = chainId === sepolia.id;
   
-  // Only enable ENS lookups on mainnet to avoid CORS errors on testnets
+  // Enable ENS lookups on Sepolia testnet
   const { data: ensName, isLoading: isLoadingName } = useEnsName({
     address,
-    chainId: mainnet.id,
-    enabled: !!address && isMainnet, // Only query ENS on mainnet
+    chainId: sepolia.id,
+    enabled: !!address && isSepolia, // Query ENS on Sepolia
   });
 
   // Fetch ENS avatar (NFT or uploaded image)
   const { data: ensAvatar, isLoading: isLoadingAvatar } = useEnsAvatar({
     name: ensName ? normalize(ensName) : undefined,
-    chainId: mainnet.id,
-    enabled: !!ensName && isMainnet, // Only query ENS on mainnet
+    chainId: sepolia.id,
+    enabled: !!ensName && isSepolia, // Query ENS on Sepolia
   });
 
   // Format address for display (0x1234...5678)

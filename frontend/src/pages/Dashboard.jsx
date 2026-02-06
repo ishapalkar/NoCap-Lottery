@@ -9,10 +9,13 @@ import { useCountdown } from '../hooks/useCountdown';
 import { YellowSessionBanner } from '../components/YellowSessionBanner';
 import { Header } from '../components/Header';
 import { FloatingCoins } from '../components/FloatingCoins';
+import { WinnerAnnouncementModal } from '../components/WinnerAnnouncementModal';
 
 export function Dashboard() {
   const navigate = useNavigate();
   const { address, isConnected } = useAccount();
+  const [showWinnerModal, setShowWinnerModal] = useState(false);
+  const [winnerData, setWinnerData] = useState(null);
   const { 
     currentRound,
     depositWindowEnd,
@@ -46,6 +49,19 @@ export function Dashboard() {
   };
 
   const currentPhase = getCurrentPhase();
+
+  // Watch for winner events and show modal
+  useEffect(() => {
+    if (lastWinner && lastWinner.round && !winnerData) {
+      setWinnerData({
+        winner: lastWinner.winner,
+        prize: lastWinner.prize || 0,
+        bonus: lastWinner.bonus || 0,
+        round: lastWinner.round,
+      });
+      setShowWinnerModal(true);
+    }
+  }, [lastWinner, winnerData]);
 
   if (!isConnected) {
     return (
@@ -229,7 +245,35 @@ export function Dashboard() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.45 }}
           >
-            <h3 style={styles.sectionTitle}>🏆 LATEST WINNER</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h3 style={styles.sectionTitle}>🏆 LATEST WINNER</h3>
+              <motion.button
+                onClick={() => {
+                  setWinnerData({
+                    winner: lastWinner ? lastWinner.winner : roundWinner,
+                    prize: lastWinner ? lastWinner.prize : roundPrize,
+                    bonus: lastWinner ? lastWinner.bonus : 0,
+                    round: lastWinner ? lastWinner.round : (currentRound - 1),
+                  });
+                  setShowWinnerModal(true);
+                }}
+                className="btn-bounce"
+                style={{
+                  background: 'linear-gradient(135deg, #ffd23f 0%, #ff4d6d 100%)',
+                  border: '3px solid #1a1a1a',
+                  borderRadius: '12px',
+                  padding: '10px 20px',
+                  fontFamily: '"Comic Neue", cursive',
+                  fontSize: '14px',
+                  fontWeight: '900',
+                  color: '#1a1a1a',
+                  cursor: 'pointer',
+                  boxShadow: '4px 4px 0 #1a1a1a',
+                }}
+              >
+                🎊 VIEW CELEBRATION
+              </motion.button>
+            </div>
             
             <div style={styles.winnerInfo}>
               <div style={styles.winnerIcon}>🎉</div>
@@ -347,6 +391,21 @@ export function Dashboard() {
               </div>
             </div>
           </motion.div>
+        )}
+
+        {/* Winner Announcement Modal */}
+        {winnerData && (
+          <WinnerAnnouncementModal
+            isOpen={showWinnerModal}
+            onClose={() => {
+              setShowWinnerModal(false);
+              setWinnerData(null);
+            }}
+            winner={winnerData.winner}
+            prizeAmount={winnerData.prize}
+            bonusAmount={winnerData.bonus}
+            round={winnerData.round}
+          />
         )}
       </div>
     </div>
