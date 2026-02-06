@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Clock, Trophy } from 'lucide-react';
+import { DepositOptionsModal } from '../components/DepositOptionsModal';
 
 export function ETHPool() {
   const navigate = useNavigate();
   const [depositAmount, setDepositAmount] = useState('');
   const [activeTab, setActiveTab] = useState('RULES');
+  const [showOptionsModal, setShowOptionsModal] = useState(false);
 
   return (
     <div style={styles.container}>
@@ -99,13 +101,43 @@ export function ETHPool() {
             transition={{ duration: 0.3, delay: 0.3 }}
           >
             <h2 style={styles.depositTitle}>ETH DEPOSITS</h2>
-            <p style={styles.depositSubtitle}>Coming soon...</p>
+            <p style={styles.depositSubtitle}>Ready to deposit</p>
+            <div style={styles.depositForm}>
+              <button 
+                onClick={() => setShowOptionsModal(true)}
+                style={styles.depositButton}
+                className="btn-bounce"
+              >
+                CHOOSE DEPOSIT METHOD
+              </button>
+            </div>
             <div style={styles.comingSoonBox}>
               <span style={styles.comingSoonEmoji}>🚀</span>
-              <p style={styles.comingSoonText}>ETH pool integration is under construction. Check back soon!</p>
+              <p style={styles.comingSoonText}>ETH pool smart contracts deploying soon. UI is ready!</p>
             </div>
           </motion.div>
         </div>
+
+        {/* Deposit Options Modal */}
+        <DepositOptionsModal
+          isOpen={showOptionsModal}
+          onClose={() => setShowOptionsModal(false)}
+          poolName="Nebula ETH Pool"
+          targetChainId={11155111}
+          supportedAssets={['ETH', 'WETH']}
+          onDirectDeposit={() => {
+            alert('🚀 ETH Pool Coming Soon!\n\nDirect deposit will be available once smart contracts are deployed.');
+            setShowOptionsModal(false);
+          }}
+          onYellowDeposit={() => {
+            alert('⚡ Yellow Network for ETH Coming Soon!\n\nInstant, gas-free ETH deposits will be available soon.');
+            setShowOptionsModal(false);
+          }}
+          onBridgeDeposit={() => {
+            alert('🌉 LI.FI Bridge for ETH Coming Soon!\n\nCross-chain ETH deposits will be available soon.');
+            setShowOptionsModal(false);
+          }}
+        />
 
         {/* Tabs */}
         <motion.div
@@ -184,6 +216,23 @@ const styles = {
   depositCard: { background: '#ffffff', border: '5px solid #1a1a1a', borderRadius: '20px', padding: '30px', boxShadow: '12px 12px 0 #1a1a1a' },
   depositTitle: { fontFamily: '"Fredoka", sans-serif', fontSize: '24px', fontWeight: '900', color: '#1a1a1a', margin: '0 0 8px', textTransform: 'uppercase' },
   depositSubtitle: { fontFamily: '"Comic Neue", cursive', fontSize: '14px', fontWeight: '600', color: '#666', margin: '0 0 30px' },
+  depositForm: { marginBottom: '20px' },
+  depositButton: {
+    width: '100%',
+    fontFamily: '"Fredoka", sans-serif',
+    fontSize: '18px',
+    fontWeight: '900',
+    color: '#1a1a1a',
+    background: '#00d4ff',
+    border: '4px solid #1a1a1a',
+    borderRadius: '12px',
+    padding: '16px',
+    cursor: 'pointer',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+    boxShadow: '6px 6px 0 #1a1a1a',
+    transition: 'all 0.15s',
+  },
   comingSoonBox: { textAlign: 'center', padding: '60px 20px', background: '#f5f5f5', border: '3px solid #1a1a1a', borderRadius: '12px' },
   comingSoonEmoji: { fontSize: '64px', display: 'block', marginBottom: '20px' },
   comingSoonText: { fontFamily: '"Comic Neue", cursive', fontSize: '16px', fontWeight: '600', color: '#666' },
