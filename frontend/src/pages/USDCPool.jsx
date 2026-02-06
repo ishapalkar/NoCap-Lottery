@@ -12,7 +12,9 @@ import { useUSDCVault } from '../hooks/useUSDCVault';
 import { useUSDCBalance, useUSDCAllowance, useUSDCApproval } from '../hooks/useUSDCApproval';
 import { useCountdown } from '../hooks/useCountdown';
 import { YellowDepositModal } from '../components/YellowDepositModal';
+import { DepositOptionsModal } from '../components/DepositOptionsModal';
 import { useYellowNetwork } from '../hooks/useYellowNetwork';
+import { useLiFi } from '../hooks/useLiFi';
 
 const SEPOLIA_CHAIN_ID = 11155111;
 const LOTTERY_POOL_ADDRESS = import.meta.env.VITE_USDC_LOTTERY;
@@ -26,6 +28,8 @@ export function USDCPool() {
   const [depositAmount, setDepositAmount] = useState('');
   const [activeTab, setActiveTab] = useState('RULES');
   const [showYellowModal, setShowYellowModal] = useState(false);
+  const [showOptionsModal, setShowOptionsModal] = useState(false);
+  const [showBridgeFlow, setShowBridgeFlow] = useState(false);
 
   // Hooks
   const lottery = useLotteryPoolUSDC(address);
@@ -38,6 +42,7 @@ export function USDCPool() {
   // Extract bonus pool and players from lottery hook
   const bonusPoolAmount = lottery.bonusPool || 0;
   const playersCount = lottery.playersCount || 0;
+  const lifi = useLiFi();
 
   // Countdown timer
   const depositCountdown = useCountdown(lottery.depositWindowEnd);
@@ -318,6 +323,20 @@ export function USDCPool() {
           </motion.div>
         </div>
 
+        {/* Deposit Options Modal */}
+        <DepositOptionsModal
+          isOpen={showOptionsModal}
+          onClose={() => setShowOptionsModal(false)}
+          poolName="Weekly USDC Pool"
+          targetChainId={SEPOLIA_CHAIN_ID}
+          supportedAssets={['USDC']}
+          onDirectDeposit={handleDeposit}
+          onYellowDeposit={() => setShowYellowModal(true)}
+          onBridgeDeposit={() => {
+            alert('🌉 LI.FI Bridge Integration Coming Soon!\n\nThis will allow you to deposit from any chain.');
+          }}
+        />
+
         {/* Yellow Deposit Modal */}
         <YellowDepositModal
           isOpen={showYellowModal}
@@ -327,6 +346,7 @@ export function USDCPool() {
           onSuccess={() => {
             refetchBalance();
             vault.refetch?.();
+            setShowOptionsModal(false);
           }}
         />
 

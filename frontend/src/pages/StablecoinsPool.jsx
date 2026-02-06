@@ -14,7 +14,9 @@ import { useUSDCVault } from '../hooks/useUSDCVault';
 import { useUSDCBalance, useUSDCAllowance, useUSDCApproval } from '../hooks/useUSDCApproval';
 import { useCountdown } from '../hooks/useCountdown';
 import { YellowDepositModal } from '../components/YellowDepositModal';
+import { DepositOptionsModal } from '../components/DepositOptionsModal';
 import { useYellowNetwork } from '../hooks/useYellowNetwork';
+import { useLiFi } from '../hooks/useLiFi';
 
 const SEPOLIA_CHAIN_ID = 11155111;
 const LOTTERY_POOL_ADDRESS = import.meta.env.VITE_USDC_LOTTERY;
@@ -28,6 +30,7 @@ export function StablecoinsPool() {
   const [depositAmount, setDepositAmount] = useState('');
   const [activeTab, setActiveTab] = useState('RULES');
   const [showYellowModal, setShowYellowModal] = useState(false);
+  const [showOptionsModal, setShowOptionsModal] = useState(false);
   const [mode, setMode] = useState('deposit'); // 'deposit' or 'withdraw'
   const [autoYellowEnabled, setAutoYellowEnabled] = useState(true); // Auto-create Yellow session
 
@@ -38,6 +41,7 @@ export function StablecoinsPool() {
   const { allowance, refetch: refetchAllowance } = useUSDCAllowance(address, LOTTERY_POOL_ADDRESS);
   const approval = useUSDCApproval(LOTTERY_POOL_ADDRESS);
   const { hasActiveSession, createSession, instantDeposit, settleSession } = useYellowNetwork();
+  const lifi = useLiFi();
 
   // Countdown timer
   const depositCountdown = useCountdown(lottery.depositWindowEnd * 1000);
@@ -453,21 +457,16 @@ export function StablecoinsPool() {
                     </motion.button>
                   ) : (
                     <motion.button
-                      onClick={handleDeposit}
-                      disabled={lottery.isPending || !depositAmount || !isDepositWindowOpen()}
+                      onClick={() => setShowOptionsModal(true)}
+                      disabled={!depositAmount || !isDepositWindowOpen()}
                       className="btn-bounce"
                       style={{
                         ...styles.depositButton,
-                        opacity: (lottery.isPending || !depositAmount || !isDepositWindowOpen()) ? 0.5 : 1,
-                        cursor: (lottery.isPending || !depositAmount || !isDepositWindowOpen()) ? 'not-allowed' : 'pointer',
-                        background: hasActiveSession && isDepositWindowOpen() ? 'linear-gradient(135deg, #ffd23f 0%, #ffed4e 100%)' : undefined,
+                        opacity: (!depositAmount || !isDepositWindowOpen()) ? 0.5 : 1,
+                        cursor: (!depositAmount || !isDepositWindowOpen()) ? 'not-allowed' : 'pointer',
                       }}
                     >
-                      {hasActiveSession && isDepositWindowOpen() 
-                        ? '⚡ INSTANT DEPOSIT (YELLOW)' 
-                        : lottery.isPending 
-                        ? 'DEPOSITING...' 
-                        : 'DEPOSIT & PLAY'}
+                      CHOOSE DEPOSIT METHOD
                     </motion.button>
                   )}
                 </>
@@ -489,6 +488,20 @@ export function StablecoinsPool() {
           </motion.div>
         </div>
 
+        {/* Deposit Options Modal */}
+        <DepositOptionsModal
+          isOpen={showOptionsModal}
+          onClose={() => setShowOptionsModal(false)}
+          poolName="Stablecoins Pool"
+          targetChainId={SEPOLIA_CHAIN_ID}
+          supportedAssets={['USDC', 'USDT', 'DAI']}
+          onDirectDeposit={handleDeposit}
+          onYellowDeposit={() => setShowYellowModal(true)}
+          onBridgeDeposit={() => {
+            alert('🌉 LI.FI Bridge Integration Coming Soon!\n\nThis will allow you to deposit stablecoins from any chain.');
+          }}
+        />
+
         {/* Yellow Deposit Modal */}
         <YellowDepositModal
           isOpen={showYellowModal}
@@ -498,6 +511,7 @@ export function StablecoinsPool() {
           onSuccess={() => {
             refetchBalance();
             vault.refetch?.();
+            setShowOptionsModal(false);
           }}
         />
 
