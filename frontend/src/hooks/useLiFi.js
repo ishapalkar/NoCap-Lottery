@@ -51,8 +51,9 @@ export function useLiFi() {
    * @param {string} fromToken - Source token symbol (ETH, USDC, USDT, WBTC, etc.)
    * @param {string} amount - Amount in smallest unit
    * @param {string} assetPool - Asset pool type (STABLECOIN, ETH, BTC)
+   * @param {number} toChainId - Target chain ID (defaults to Base mainnet since LI.FI doesn't support testnets)
    */
-  const getQuote = useCallback(async (fromChainId, fromToken, amount, assetPool = 'STABLECOIN') => {
+  const getQuote = useCallback(async (fromChainId, fromToken, amount, assetPool = 'STABLECOIN', toChainId = 8453) => {
     if (!address) {
       throw new Error('Wallet not connected');
     }
@@ -86,9 +87,10 @@ export function useLiFi() {
       const fromTokenAddress = fromToken === 'ETH' ? '0x0000000000000000000000000000000000000000' : fromToken;
 
       // Request SAME-ASSET cross-chain route (or normalized within pool)
+      // Note: Using Base mainnet (8453) as default since LI.FI doesn't support testnets
       const routesRequest = {
         fromChainId: parseInt(fromChainId),
-        toChainId: TARGET_CHAIN_ID,
+        toChainId: parseInt(toChainId),
         fromTokenAddress: fromTokenAddress,
         toTokenAddress: toToken, // Same asset or normalized (USDT→USDC, ETH→WETH)
         fromAmount: amount,

@@ -51,8 +51,8 @@ export function DepositOptionsModal({
 
           {/* Header */}
           <div style={styles.header}>
-            <h2 style={styles.title}>How Many Deposits?</h2>
-            <p style={styles.subtitle}>Choose based on your deposit plan for {poolName}</p>
+            <h2 style={styles.title}>Choose Deposit Method</h2>
+            <p style={styles.subtitle}>Select the best option for {poolName}</p>
           </div>
 
           {/* Option Cards */}
@@ -114,13 +114,45 @@ export function DepositOptionsModal({
                 </span>
               </div>
             </motion.div>
+
+            {/* LI.FI Bridge Option */}
+            <motion.div
+              style={{...styles.optionCard, ...styles.optionCardBridge}}
+              className="card-squishy"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => handleOptionClick('bridge')}
+            >
+              <div style={{...styles.optionIcon, ...styles.optionIconBridge}}>
+                <ArrowLeftRight size={32} strokeWidth={3} />
+              </div>
+              <h3 style={styles.optionTitle}>Bridge from Any Chain</h3>
+              <p style={styles.optionDescription}>
+                Deposit from Ethereum, Base, Arbitrum, or other chains
+              </p>
+              <div style={styles.optionFeatures}>
+                <div style={styles.featureGood}>✓ Cross-chain deposits</div>
+                <div style={styles.featureGood}>✓ Best rates via LI.FI</div>
+                <div style={styles.feature}>✓ Auto-bridging & deposit</div>
+                <div style={styles.featureWarn}>⚠ Bridge + gas fees (~$5-15)</div>
+              </div>
+              <div style={styles.optionBadgeBridge}>
+                🌉 Bridge from 20+ chains
+              </div>
+              <div style={{...styles.infoBox, border: '2px solid #00d4ff', background: '#e6f9ff'}}>
+                <Info size={14} />
+                <span style={styles.infoText}>
+                  Deposit from any chain using LI.FI's bridge. Funds are automatically bridged and deposited in one transaction!
+                </span>
+              </div>
+            </motion.div>
           </div>
 
           {/* Bottom Note */}
           <div style={styles.bottomNote}>
             <Info size={16} />
             <span>
-              💡 Tip: Choose "Single Deposit" for one transaction. Choose "Multiple Deposits" if you plan to deposit more than once to save on gas fees.
+              💡 Tip: Choose "Single Deposit" for one transaction, "Multiple Deposits" to save gas on repeated deposits, or "Bridge" to deposit from another chain.
             </span>
           </div>
         </motion.div>
@@ -148,7 +180,7 @@ const styles = {
     border: '5px solid #1a1a1a',
     borderRadius: '24px',
     boxShadow: '16px 16px 0 #1a1a1a',
-    maxWidth: '900px',
+    maxWidth: '1200px',
     width: '100%',
     maxHeight: '90vh',
     overflow: 'auto',
@@ -211,6 +243,11 @@ const styles = {
     border: '4px solid #ffd23f',
     boxShadow: '8px 8px 0 #ffd23f',
   },
+  optionCardBridge: {
+    background: 'linear-gradient(135deg, #e6f9ff 0%, #f0fbff 100%)',
+    border: '4px solid #00d4ff',
+    boxShadow: '8px 8px 0 #00d4ff',
+  },
   optionIcon: {
     width: '60px',
     height: '60px',
@@ -225,6 +262,9 @@ const styles = {
   },
   optionIconYellow: {
     background: '#ffd23f',
+  },
+  optionIconBridge: {
+    background: '#00d4ff',
   },
   recommendedBadge: {
     position: 'absolute',
@@ -298,6 +338,18 @@ const styles = {
   },
   optionBadgeYellow: {
     background: '#ffd23f',
+    border: '2px solid #1a1a1a',
+    borderRadius: '12px',
+    padding: '8px 12px',
+    fontFamily: '"Comic Neue", cursive',
+    fontSize: '12px',
+    fontWeight: '700',
+    color: '#1a1a1a',
+    textAlign: 'center',
+    marginTop: 'auto',
+  },
+  optionBadgeBridge: {
+    background: '#00d4ff',
     border: '2px solid #1a1a1a',
     borderRadius: '12px',
     padding: '8px 12px',

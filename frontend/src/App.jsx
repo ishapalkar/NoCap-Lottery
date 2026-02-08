@@ -4,6 +4,7 @@ import { HeroSection } from './components/HeroSection';
 import { DrawStatus } from './components/DrawStatus';
 import { ActivePools } from './components/ActivePools';
 import { WinnersBoard } from './components/WinnersBoard';
+import { YellowSessionBanner } from './components/YellowSessionBanner';
 import { Pools } from './pages/Pools';
 import { Dashboard } from './pages/Dashboard';
 import { StablecoinsPool } from './pages/StablecoinsPool';
@@ -14,6 +15,8 @@ import { Leaderboard } from './pages/Leaderboard';
 import { Profile } from './pages/Profile';
 import DemoPrize from './pages/DemoPrize';
 import { Play } from './components/Play';
+import HowItWorks from './pages/HowItWorks';
+import Winners from './pages/Winners';
 import { useState, useEffect } from 'react';
 import './App.css';
 
@@ -35,6 +38,7 @@ function App() {
 
   return (
     <main className="relative min-h-screen whiteboard-bg">
+      <YellowSessionBanner />
       <div className="relative z-10">
         <Routes>
           {/* Home Route */}
@@ -42,9 +46,6 @@ function App() {
             <>
               <Header />
               <HeroSection />
-              <DrawStatus />
-              <ActivePools />
-              <WinnersBoard />
             </>
           } />
 
@@ -55,6 +56,9 @@ function App() {
               <Pools />
             </>
           } />
+
+          {/* How It Works Route */}
+          <Route path="/how-it-works" element={<HowItWorks />} />
 
           {/* Dashboard Route */}
           <Route path="/dashboard" element={<Dashboard />} />
@@ -86,6 +90,9 @@ function App() {
               <Leaderboard />
             </>
           } />
+
+          {/* Winners Route */}
+          <Route path="/winners" element={<Winners />} />
 
           {/* Cross-Chain Play Route */}
           <Route path="/play" element={

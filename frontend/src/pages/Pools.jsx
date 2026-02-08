@@ -64,35 +64,6 @@ export function Pools() {
         </p>
       </motion.div>
 
-      {/* Features */}
-      <motion.div
-        initial={{ y: 30, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.3, delay: 0.1 }}
-        style={styles.featuresGrid}
-      >
-        <motion.div style={styles.featureCard} className="card-squishy">
-          <Shield style={styles.featureIcon} />
-          <h3 style={styles.featureTitle}>No Loss</h3>
-          <p style={styles.featureText}>Your principal is always safe</p>
-        </motion.div>
-        <motion.div style={styles.featureCard} className="card-squishy">
-          <TrendingUp style={styles.featureIcon} />
-          <h3 style={styles.featureTitle}>Yield Generation</h3>
-          <p style={styles.featureText}>Earn through Aave V3</p>
-        </motion.div>
-        <motion.div style={styles.featureCard} className="card-squishy">
-          <Sparkles style={styles.featureIcon} />
-          <h3 style={styles.featureTitle}>Fair Winners</h3>
-          <p style={styles.featureText}>Chainlink VRF randomness</p>
-        </motion.div>
-        <motion.div style={styles.featureCard} className="card-squishy">
-          <Clock style={styles.featureIcon} />
-          <h3 style={styles.featureTitle}>Weekly Draws</h3>
-          <p style={styles.featureText}>Consistent prize schedule</p>
-        </motion.div>
-      </motion.div>
-
       {/* Pool Cards */}
       <div style={styles.poolsGrid}>
         {pools.map((pool, index) => (

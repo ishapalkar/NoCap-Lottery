@@ -1,184 +1,162 @@
 import { useState, useEffect } from 'react';
-import { useAccount, useChainId, useSwitchChain } from 'wagmi';
 import { useNavigate } from 'react-router-dom';
+import { useAccount, useSwitchChain, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { motion } from 'framer-motion';
-import { 
-  ArrowLeft, 
-  Clock, 
-  Trophy,
-  AlertCircle,
-  TrendingUp
-} from 'lucide-react';
-import { useLotteryPoolUSDC } from '../hooks/useLotteryPoolUSDC';
-import { useUSDCVault } from '../hooks/useUSDCVault';
-import { useUSDCBalance, useUSDCAllowance, useUSDCApproval } from '../hooks/useUSDCApproval';
-import { useCountdown } from '../hooks/useCountdown';
-import { YellowDepositModal } from '../components/YellowDepositModal';
+import { ArrowLeft, Clock, Trophy, Wallet, CheckCircle } from 'lucide-react';
+import { parseUnits, formatUnits } from 'viem';
 import { DepositOptionsModal } from '../components/DepositOptionsModal';
+import { YellowDepositModal } from '../components/YellowDepositModal';
+import { LiFiBridgeModal } from '../components/LiFiBridgeModal';
 import { useYellowNetwork } from '../hooks/useYellowNetwork';
-import { useLiFi } from '../hooks/useLiFi';
+import { useLotteryPoolUSDC } from '../hooks/useLotteryPoolUSDC';
+import { useUSDCBalance, useUSDCAllowance, useUSDCApproval } from '../hooks/useUSDCApproval';
+import LotteryPoolUSBCABI from '../abis/LotteryPoolUSDC.json';
 
 const SEPOLIA_CHAIN_ID = 11155111;
 const LOTTERY_POOL_ADDRESS = import.meta.env.VITE_USDC_LOTTERY;
+const USDC_ADDRESS = import.meta.env.VITE_USDC_ADDRESS;
 
 export function StablecoinsPool() {
   const navigate = useNavigate();
-  const { address, isConnected } = useAccount();
-  const chainId = useChainId();
+  const { address, isConnected, chain } = useAccount();
   const { switchChain } = useSwitchChain();
-
-  const [depositAmount, setDepositAmount] = useState('');
+  
   const [activeTab, setActiveTab] = useState('RULES');
-  const [showYellowModal, setShowYellowModal] = useState(false);
   const [showOptionsModal, setShowOptionsModal] = useState(false);
-  const [mode, setMode] = useState('deposit'); // 'deposit' or 'withdraw'
-  const [autoYellowEnabled, setAutoYellowEnabled] = useState(true); // Auto-create Yellow session
-
-  // Hooks
-  const lottery = useLotteryPoolUSDC(address);
-  const vault = useUSDCVault();
+  const [showYellowModal, setShowYellowModal] = useState(false);
+  const [showBridgeModal, setShowBridgeModal] = useState(false);
+  const [depositAmount, setDepositAmount] = useState('');
+  const [isApproving, setIsApproving] = useState(false);
+  
+  const { hasActiveSession } = useYellowNetwork();
+  
+  // Contract hooks
+  const lotteryData = useLotteryPoolUSDC(address);
   const { balance: usdcBalance, refetch: refetchBalance } = useUSDCBalance(address);
   const { allowance, refetch: refetchAllowance } = useUSDCAllowance(address, LOTTERY_POOL_ADDRESS);
-  const approval = useUSDCApproval(LOTTERY_POOL_ADDRESS);
-  const { hasActiveSession, createSession, instantDeposit, settleSession } = useYellowNetwork();
-  const lifi = useLiFi();
-
-  // Countdown timer
-  const depositCountdown = useCountdown(lottery.depositWindowEnd * 1000);
-
-  // Check if deposit window is open (24 hours from week start)
-  const isDepositWindowOpen = () => {
-    if (!lottery.depositWindowEnd) return false;
-    const now = Date.now();
-    const windowEnd = lottery.depositWindowEnd * 1000;
-    return now < windowEnd;
-  };
-
-  // Calculate user's principal and yield
-  const userPrincipal = lottery.userDeposits || 0;
-  const userShares = vault.userShares || 0;
-  const shareValue = vault.sharePrice || 1;
-  const userTotalValue = userShares * shareValue;
-  const userYield = Math.max(0, userTotalValue - userPrincipal);
-
-  // Calculate progress percentage
-  const progressPercentage = Math.min((vault.totalAssets / 2500000) * 100, 100);
-
-  // Calculate user tickets and winning chance
-  const userTickets = Math.floor(parseFloat(depositAmount) || 0);
-  const totalTickets = vault.totalAssets + userTickets;
-  const winningChance = totalTickets > 0 ? ((userTickets / totalTickets) * 100).toFixed(1) : 0;
-
-  // Check if needs approval
-  const needsApproval = parseFloat(depositAmount) > allowance;
-
-  // Handle approve
-  const handleApprove = async () => {
-    try {
-      await approval.approve(depositAmount);
-      alert('✅ USDC approved! You can now deposit.');
-    } catch (error) {
-      console.error('Approval failed:', error);
-      alert('❌ Approval failed. Please try again.');
-    }
-  };
-
-  // Handle opening deposit options
-  const handleDepositClick = () => {
-    if (!depositAmount || parseFloat(depositAmount) < lottery.minDeposit) {
-      alert(`Minimum deposit is ${lottery.minDeposit} USDC`);
-      return;
-    }
-
-    if (!isDepositWindowOpen()) {
-      alert('❌ Deposit window is closed. Please wait for the next round.');
-      return;
-    }
-
-    // Show options modal to choose single or multiple deposits
-    setShowOptionsModal(true);
-  };
-
-  // Handle direct deposit (single transaction)
-  const handleDirectDeposit = async () => {
-    try {
-      await lottery.deposit(depositAmount);
-      alert('✅ Standard deposit successful! You are entered into this week\'s draw.');
-      setDepositAmount('');
-    } catch (error) {
-      console.error('Deposit failed:', error);
-      alert('❌ Deposit failed. ' + error.message);
-    }
-  };
-
-  // Handle deposit (legacy - keeping for compatibility)
-  const handleDeposit = async () => {
-    if (!depositAmount || parseFloat(depositAmount) < lottery.minDeposit) {
-      alert(`Minimum deposit is ${lottery.minDeposit} USDC`);
-      return;
-    }
-
-    if (!isDepositWindowOpen()) {
-      alert('❌ Deposit window is closed. Please wait for the next round.');
-      return;
-    }
-
-    try {
-      await lottery.deposit(depositAmount);
-      alert('✅ Deposit successful! You are entered into this week\'s draw.');
-      setDepositAmount('');
-    } catch (error) {
-      console.error('Deposit failed:', error);
-      alert('❌ Deposit failed. ' + error.message);
-    }
-  };
-
-  // Handle withdraw
-  const handleWithdraw = async () => {
-    if (!depositAmount || parseFloat(depositAmount) <= 0) {
-      alert('Please enter an amount to withdraw');
-      return;
-    }
-
-    const amount = parseFloat(depositAmount);
-    if (amount > userPrincipal) {
-      alert(`You can only withdraw up to your principal: ${userPrincipal.toFixed(2)} USDC`);
-      return;
-    }
-
-    const confirmed = window.confirm(
-      `⚠️ Early Withdrawal Warning:\n\n` +
-      `You are withdrawing ${amount} USDC\n` +
-      `Your accrued yield (${userYield.toFixed(2)} USDC) will go to the prize pool\n` +
-      `You will be ineligible for this week's draw\n\n` +
-      `Continue with withdrawal?`
-    );
-
-    if (!confirmed) return;
-
-    try {
-      await lottery.withdraw(depositAmount);
-      alert(`✅ Withdrawal successful!\n\nPrincipal returned: ${amount} USDC\nYield forfeited: ${userYield.toFixed(2)} USDC (goes to prize pool)`);
-      setDepositAmount('');
-    } catch (error) {
-      console.error('Withdrawal failed:', error);
-      alert('❌ Withdrawal failed. ' + error.message);
-    }
-  };
-
-  // Effects for success notifications
+  const { approve, isPending: isApprovePending, isSuccess: isApproveSuccess, reset: resetApprove } = useUSDCApproval(LOTTERY_POOL_ADDRESS);
+  
+  // Deposit transaction
+  const { data: depositHash, writeContract, isPending: isDepositPending, error: depositError } = useWriteContract();
+  const { isLoading: isDepositConfirming, isSuccess: isDepositSuccess } = useWaitForTransactionReceipt({ hash: depositHash });
+  
+  // Reset approval state after success
   useEffect(() => {
-    if (approval.isSuccess) {
+    if (isApproveSuccess) {
       refetchAllowance();
+      setTimeout(() => resetApprove(), 2000);
     }
-  }, [approval.isSuccess, refetchAllowance]);
-
+  }, [isApproveSuccess, refetchAllowance, resetApprove]);
+  
+  // Refetch balances after successful deposit
   useEffect(() => {
-    if (lottery.isDepositSuccess) {
+    if (isDepositSuccess) {
       refetchBalance();
+      lotteryData.refetchUserDeposits();
+      lotteryData.refetchPlayers();
       setDepositAmount('');
     }
-  }, [lottery.isDepositSuccess, refetchBalance]);
+  }, [isDepositSuccess]);
+  
+  const isWrongNetwork = chain?.id !== SEPOLIA_CHAIN_ID;
+  
+  // Calculate time remaining until deposit window ends
+  const getTimeRemaining = () => {
+    if (!lotteryData.depositWindowEnd) return 'Loading...';
+    const now = Math.floor(Date.now() / 1000);
+    const end = Number(lotteryData.depositWindowEnd);
+    const diff = end - now;
+    
+    if (diff <= 0) return 'Draw Ready';
+    
+    const days = Math.floor(diff / 86400);
+    const hours = Math.floor((diff % 86400) / 3600);
+    const mins = Math.floor((diff % 3600) / 60);
+    
+    return `${days}d ${hours}h ${mins}m`;
+  };
+  
+  // Format user deposit amount
+  const userDepositAmount = lotteryData.userDeposits 
+    ? Number(formatUnits(lotteryData.userDeposits, 6)).toFixed(2)
+    : '0.00';
+    
+  // Format total pool size (number of players * their deposits)
+  const totalPoolSize = lotteryData.playersData?.length || 0;
+  
+  // Calculate current prize (set to $0)
+  const currentPrize = '$0';
+    
+  // Calculate odds (1 in total players)
+  const odds = totalPoolSize > 0 ? `1 in ${totalPoolSize}` : '1 in 1';
+  
+  const handleApprove = async () => {
+    if (!depositAmount || parseFloat(depositAmount) <= 0) {
+      alert('Please enter a valid amount');
+      return;
+    }
+    
+    setIsApproving(true);
+    try {
+      await approve(depositAmount);
+    } catch (err) {
+      console.error('Approval failed:', err);
+    } finally {
+      setIsApproving(false);
+    }
+  };
+  
+  const handleDeposit = async () => {
+    if (!isConnected) {
+      alert('Please connect your wallet first');
+      return;
+    }
+    
+    if (isWrongNetwork) {
+      switchChain({ chainId: SEPOLIA_CHAIN_ID });
+      return;
+    }
+    
+    if (!depositAmount || parseFloat(depositAmount) <= 0) {
+      alert('Please enter a valid deposit amount');
+      return;
+    }
+    
+    const amount = parseFloat(depositAmount);
+    
+    if (amount > usdcBalance) {
+      alert(`Insufficient USDC balance. You have ${usdcBalance.toFixed(2)} USDC`);
+      return;
+    }
+    
+    // Check if deposit is open
+    if (!lotteryData.depositWindowOpen) {
+      alert('Deposit window is currently closed. Please wait for the next round.');
+      return;
+    }
+    
+    // Check allowance
+    if (allowance < amount) {
+      alert('Please approve USDC spending first by clicking the APPROVE button');
+      return;
+    }
+    
+    try {
+      const amountInWei = parseUnits(depositAmount, 6);
+      
+      writeContract({
+        address: LOTTERY_POOL_ADDRESS,
+        abi: LotteryPoolUSBCABI,
+        functionName: 'deposit',
+        args: [amountInWei],
+      });
+    } catch (err) {
+      console.error('Deposit failed:', err);
+      alert(`Deposit failed: ${err.message}`);
+    }
+  };
+  
+  const needsApproval = depositAmount && parseFloat(depositAmount) > allowance;
 
   return (
     <div style={styles.container}>
@@ -196,39 +174,6 @@ export function StablecoinsPool() {
           <span>BACK TO POOLS</span>
         </motion.button>
 
-        {/* Yellow Settlement Banner (if session active and window closed) */}
-        {hasActiveSession && !isDepositWindowOpen() && (
-          <motion.div
-            style={styles.settlementBanner}
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <div style={styles.settlementContent}>
-              <span style={styles.settlementIcon}>⚡</span>
-              <div>
-                <div style={styles.settlementTitle}>YELLOW SESSION READY TO SETTLE</div>
-                <div style={styles.settlementText}>
-                  Deposit window closed. Settle your instant deposits on-chain now.
-                </div>
-              </div>
-            </div>
-            <motion.button
-              onClick={async () => {
-                try {
-                  await settleSession();
-                  alert('✅ Session settled! All deposits finalized on-chain.');
-                } catch (error) {
-                  alert('❌ Settlement failed: ' + error.message);
-                }
-              }}
-              style={styles.settlementButton}
-              className="btn-bounce"
-            >
-              SETTLE NOW
-            </motion.button>
-          </motion.div>
-        )}
-
         {/* Pool Title */}
         <motion.div
           style={styles.titleSection}
@@ -238,25 +183,11 @@ export function StablecoinsPool() {
         >
           <div style={styles.iconCircle}>💰</div>
           <h1 style={styles.title}>Stablecoins Pool</h1>
-          <p style={styles.subtitle}>USDC, USDT, DAI - All Stablecoins Welcome</p>
           <div style={styles.badges}>
             <span style={styles.badgeCyan}>NO LOSS</span>
             <span style={styles.badgeGrey}>WEEKLY DRAW</span>
-            <span style={styles.badgeYellow}>AAVE YIELD</span>
           </div>
         </motion.div>
-
-        {/* Deposit Window Warning */}
-        {!isDepositWindowOpen() && (
-          <motion.div
-            style={styles.warningBanner}
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <AlertCircle size={20} />
-            <span>⏰ Deposit window closed. Opens {depositCountdown.formatted}</span>
-          </motion.div>
-        )}
 
         {/* Main Grid */}
         <div style={styles.mainGrid}>
@@ -269,9 +200,8 @@ export function StablecoinsPool() {
             transition={{ duration: 0.3, delay: 0.2 }}
           >
             <div style={styles.prizeHeader}>
-              <h2 style={styles.prizeLabel}>CURRENT PRIZE POOL</h2>
-              <div style={styles.prizeAmount}>$50,000</div>
-              <div style={styles.yieldNote}>💡 Prize = Yield Only (Principal Safe)</div>
+              <h2 style={styles.prizeLabel}>CURRENT PRIZE</h2>
+              <div style={styles.prizeAmount}>{currentPrize}</div>
             </div>
 
             <div style={styles.prizeDetails}>
@@ -279,204 +209,178 @@ export function StablecoinsPool() {
                 <div style={styles.detailItem}>
                   <Clock size={20} style={{ color: '#1a1a1a' }} />
                   <div>
-                    <div style={styles.detailLabel}>DRAW IN</div>
-                    <div style={styles.detailValue}>{depositCountdown.formatted || '2d 14h 30m'}</div>
+                    <div style={styles.detailLabel}>TIME LEFT</div>
+                    <div style={styles.detailValue}>{getTimeRemaining()}</div>
                   </div>
                 </div>
                 <div style={styles.detailItem}>
                   <Trophy size={20} style={{ color: '#1a1a1a' }} />
                   <div>
-                    <div style={styles.detailLabel}>YOUR ODDS</div>
-                    <div style={styles.detailValue}>
-                      {userPrincipal > 0 ? `1 in ${Math.floor(vault.totalAssets / userPrincipal)}` : 'Not Entered'}
-                    </div>
-                  </div>
-                </div>
-                <div style={styles.detailItem}>
-                  <TrendingUp size={20} style={{ color: '#06d6a0' }} />
-                  <div>
-                    <div style={styles.detailLabel}>YOUR YIELD</div>
-                    <div style={styles.detailValue}>${userYield.toFixed(2)}</div>
+                    <div style={styles.detailLabel}>ODDS</div>
+                    <div style={styles.detailValue}>{odds}</div>
                   </div>
                 </div>
               </div>
+              <div style={styles.trophyIcon}>🏆</div>
             </div>
-
-            {/* User Balance Card */}
-            {userPrincipal > 0 && (
-              <div style={styles.userBalanceCard}>
-                <h3 style={styles.balanceTitle}>YOUR POSITION</h3>
-                <div style={styles.balanceGrid}>
-                  <div>
-                    <div style={styles.balanceLabel}>Principal (Safe)</div>
-                    <div style={styles.balanceValue}>${userPrincipal.toFixed(2)}</div>
-                  </div>
-                  <div>
-                    <div style={styles.balanceLabel}>Yield (For Prizes)</div>
-                    <div style={styles.balanceValue}>${userYield.toFixed(2)}</div>
-                  </div>
-                  <div>
-                    <div style={styles.balanceLabel}>Total Value</div>
-                    <div style={styles.balanceValue}>${userTotalValue.toFixed(2)}</div>
-                  </div>
-                </div>
-              </div>
-            )}
 
             {/* Pool Progress */}
             <div style={styles.progressSection}>
               <div style={styles.progressHeader}>
                 <span style={styles.progressLabel}>Pool Progress</span>
-                <span style={styles.progressAmount}>${vault.totalAssets.toLocaleString()} deposited</span>
+                <span style={styles.progressAmount}>{totalPoolSize} players</span>
               </div>
               <div style={styles.progressBarContainer}>
                 <motion.div
                   style={styles.progressBarFill}
                   initial={{ width: 0 }}
-                  animate={{ width: `${progressPercentage}%` }}
+                  animate={{ width: totalPoolSize > 0 ? `${Math.min((totalPoolSize / 100) * 100, 100)}%` : '0%' }}
                   transition={{ duration: 1, delay: 0.5 }}
                 />
               </div>
             </div>
+            
+            {/* User Stats */}
+            {isConnected && (
+              <div style={styles.statsGrid}>
+                <div style={styles.statBox}>
+                  <div style={styles.statLabel}>Your Deposit</div>
+                  <div style={styles.statValue}>${userDepositAmount}</div>
+                </div>
+                <div style={styles.statBox}>
+                  <div style={styles.statLabel}>Your Balance</div>
+                  <div style={styles.statValue}>{usdcBalance.toFixed(2)} USDC</div>
+                </div>
+              </div>
+            )}
           </motion.div>
 
-          {/* Right Card - Deposit/Withdraw */}
+          {/* Right Card - Deposit */}
           <motion.div
             style={styles.depositCard}
-            className="card-squishy"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.3 }}
           >
-            {/* Mode Toggle */}
-            <div style={styles.modeToggle}>
-              <button
-                onClick={() => setMode('deposit')}
-                style={{
-                  ...styles.modeButton,
-                  ...(mode === 'deposit' ? styles.modeButtonActive : {})
-                }}
-              >
-                DEPOSIT
-              </button>
-              <button
-                onClick={() => setMode('withdraw')}
-                style={{
-                  ...styles.modeButton,
-                  ...(mode === 'withdraw' ? styles.modeButtonActive : {})
-                }}
-              >
-                WITHDRAW
-              </button>
-            </div>
-
-            <h2 style={styles.depositTitle}>
-              {mode === 'deposit' ? 'DEPOSIT STABLECOINS' : 'WITHDRAW PRINCIPAL'}
-            </h2>
+            <h2 style={styles.depositTitle}>DIRECT DEPOSIT</h2>
             <p style={styles.depositSubtitle}>
-              {mode === 'deposit' 
-                ? 'Get tickets for the next draw. Your principal is always safe.' 
-                : 'Withdraw your principal anytime. Forfeits yield to prize pool.'}
+              {!isConnected ? 'Connect wallet to deposit' : 
+               isWrongNetwork ? 'Switch to Sepolia network' :
+               !lotteryData.depositWindowOpen ? 'Deposit window closed' :
+               'Enter amount to deposit'}
             </p>
-
+            
             <div style={styles.depositForm}>
-              <div style={styles.inputSection}>
-                <div style={styles.inputHeader}>
-                  <span style={styles.inputLabel}>AMOUNT (USDC)</span>
-                  <span style={styles.balanceText}>
-                    {mode === 'deposit' 
-                      ? `BAL: ${usdcBalance.toFixed(2)}` 
-                      : `MAX: ${userPrincipal.toFixed(2)}`}
-                  </span>
-                </div>
-                <div style={styles.inputWrapper}>
-                  <input
-                    type="number"
-                    value={depositAmount}
-                    onChange={(e) => setDepositAmount(e.target.value)}
-                    placeholder="0.00"
-                    style={styles.input}
-                  />
-                  <button
-                    onClick={() => setDepositAmount(
-                      mode === 'deposit' ? usdcBalance.toString() : userPrincipal.toString()
-                    )}
-                    style={styles.maxButton}
-                  >
-                    MAX
-                  </button>
-                </div>
-              </div>
-
-              {mode === 'deposit' && (
-                <div style={styles.receiveSection}>
-                  <div style={styles.receiveRow}>
-                    <span style={styles.receiveLabel}>You receive:</span>
-                    <span style={styles.receiveValue}>{userTickets} Tickets</span>
-                  </div>
-                  <div style={styles.receiveRow}>
-                    <span style={styles.receiveLabel}>Win chance boost:</span>
-                    <span style={styles.receiveValue}>+{winningChance}%</span>
-                  </div>
-                </div>
-              )}
-
-              {mode === 'withdraw' && userYield > 0 && (
-                <div style={styles.warningBox}>
-                  <AlertCircle size={18} />
-                  <div>
-                    <div style={styles.warningTitle}>Early Withdrawal</div>
-                    <div style={styles.warningText}>
-                      Your ${userYield.toFixed(2)} yield goes to prize pool. Principal returned.
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {mode === 'deposit' ? (
+              {isConnected && !isWrongNetwork ? (
                 <>
+                  <div style={styles.inputGroup}>
+                    <input
+                      type="number"
+                      placeholder="0.00"
+                      value={depositAmount}
+                      onChange={(e) => setDepositAmount(e.target.value)}
+                      style={styles.input}
+                      disabled={!lotteryData.depositWindowOpen}
+                    />
+                    <span style={styles.inputLabel}>USDC</span>
+                  </div>
+                  
+                  <div style={styles.inputInfo}>
+                    <span style={styles.inputInfoText}>
+                      Balance: {usdcBalance.toFixed(2)} USDC
+                    </span>
+                    <button
+                      onClick={() => setDepositAmount(usdcBalance.toFixed(2))}
+                      style={styles.maxButton}
+                      disabled={!lotteryData.depositWindowOpen}
+                    >
+                      MAX
+                    </button>
+                  </div>
+                  
                   {needsApproval ? (
-                    <motion.button
+                    <button
                       onClick={handleApprove}
-                      disabled={approval.isPending || !depositAmount}
-                      className="btn-bounce"
+                      disabled={isApprovePending || isApproving || !lotteryData.depositWindowOpen}
                       style={{
                         ...styles.depositButton,
-                        opacity: (approval.isPending || !depositAmount) ? 0.5 : 1,
-                        cursor: (approval.isPending || !depositAmount) ? 'not-allowed' : 'pointer',
+                        background: isApproveSuccess ? '#06d6a0' : '#ffd23f',
+                        opacity: (!lotteryData.depositWindowOpen || isApprovePending) ? 0.6 : 1,
                       }}
+                      className="btn-bounce"
                     >
-                      {approval.isPending ? 'APPROVING...' : 'APPROVE USDC'}
-                    </motion.button>
+                      {isApprovePending || isApproving ? '⏳ APPROVING...' : 
+                       isApproveSuccess ? '✅ APPROVED!' :
+                       '🔓 APPROVE USDC'}
+                    </button>
                   ) : (
-                    <motion.button
-                      onClick={handleDepositClick}
-                      disabled={!depositAmount || !isDepositWindowOpen()}
-                      className="btn-bounce"
+                    <button
+                      onClick={handleDeposit}
+                      disabled={isDepositPending || isDepositConfirming || !depositAmount || !lotteryData.depositWindowOpen}
                       style={{
                         ...styles.depositButton,
-                        opacity: (!depositAmount || !isDepositWindowOpen()) ? 0.5 : 1,
-                        cursor: (!depositAmount || !isDepositWindowOpen()) ? 'not-allowed' : 'pointer',
+                        background: isDepositSuccess ? '#06d6a0' : '#00d4ff',
+                        opacity: (!lotteryData.depositWindowOpen || isDepositPending || isDepositConfirming || !depositAmount) ? 0.6 : 1,
                       }}
+                      className="btn-bounce"
                     >
-                      DEPOSIT & PLAY
-                    </motion.button>
+                      {isDepositPending || isDepositConfirming ? '⏳ DEPOSITING...' :
+                       isDepositSuccess ? '✅ DEPOSITED!' :
+                       '💸 DEPOSIT NOW'}
+                    </button>
                   )}
+                  
+                  {depositError && (
+                    <div style={styles.errorBox}>
+                      ❌ {depositError.message}
+                    </div>
+                  )}
+                  
+                  <div style={styles.divider}>OR</div>
+                  
+                  <button 
+                    onClick={() => setShowBridgeModal(true)}
+                    style={styles.bridgeButton}
+                    disabled={!lotteryData.depositWindowOpen}
+                    className="btn-bounce"
+                  >
+                    🌉 BRIDGE FROM ANY CHAIN
+                  </button>
+                  
+                  <div style={styles.divider}>DEMO</div>
+                  
+                  <button 
+                    onClick={() => navigate('/demo')}
+                    style={styles.demoButton}
+                    className="btn-bounce"
+                  >
+                    ⏩ SIMULATE 1 WEEK
+                  </button>
                 </>
               ) : (
-                <motion.button
-                  onClick={handleWithdraw}
-                  disabled={lottery.isPending || !depositAmount || userPrincipal === 0}
-                  className="btn-bounce"
-                  style={{
-                    ...styles.withdrawButton,
-                    opacity: (lottery.isPending || !depositAmount || userPrincipal === 0) ? 0.5 : 1,
-                    cursor: (lottery.isPending || !depositAmount || userPrincipal === 0) ? 'not-allowed' : 'pointer',
+                <button 
+                  onClick={() => {
+                    if (!isConnected) {
+                      alert('Please connect your wallet from the top menu');
+                    } else if (isWrongNetwork) {
+                      switchChain({ chainId: SEPOLIA_CHAIN_ID });
+                    }
                   }}
+                  style={styles.depositButton}
+                  className="btn-bounce"
                 >
-                  {lottery.isPending ? 'WITHDRAWING...' : 'WITHDRAW PRINCIPAL'}
-                </motion.button>
+                  {!isConnected ? '🔗 CONNECT WALLET' : '🔄 SWITCH TO SEPOLIA'}
+                </button>
               )}
+            </div>
+            
+            <div style={styles.infoBox}>
+              <span style={styles.infoEmoji}>ℹ️</span>
+              <p style={styles.infoText}>
+                {lotteryData.depositWindowOpen 
+                  ? 'Your deposit earns yield on Aave. Withdraw anytime with no loss!'
+                  : 'Deposit window is closed. Please wait for the next round to start.'}
+              </p>
             </div>
           </motion.div>
         </div>
@@ -488,10 +392,16 @@ export function StablecoinsPool() {
           poolName="Stablecoins Pool"
           targetChainId={SEPOLIA_CHAIN_ID}
           supportedAssets={['USDC', 'USDT', 'DAI']}
-          onDirectDeposit={handleDirectDeposit}
-          onYellowDeposit={() => setShowYellowModal(true)}
+          onDirectDeposit={() => {
+            alert('🚀 Direct Deposit Feature\n\nThis will allow you to deposit stablecoins directly from your wallet.');
+            setShowOptionsModal(false);
+          }}
+          onYellowDeposit={() => {
+            setShowYellowModal(true);
+          }}
           onBridgeDeposit={() => {
-            alert('🌉 LI.FI Bridge Integration Coming Soon!\n\nThis will allow you to deposit stablecoins from any chain.');
+            setShowBridgeModal(true);
+            setShowOptionsModal(false);
           }}
         />
 
@@ -502,9 +412,21 @@ export function StablecoinsPool() {
           poolAddress={LOTTERY_POOL_ADDRESS}
           poolName="Stablecoins Pool"
           onSuccess={() => {
-            refetchBalance();
-            vault.refetch?.();
             setShowOptionsModal(false);
+          }}
+        />
+
+        {/* LI.FI Bridge Modal */}
+        <LiFiBridgeModal
+          isOpen={showBridgeModal}
+          onClose={() => setShowBridgeModal(false)}
+          poolName="Stablecoins Pool"
+          poolAddress={LOTTERY_POOL_ADDRESS}
+          targetAsset="USDC"
+          targetChainId={8453}
+          onSuccess={() => {
+            setShowOptionsModal(false);
+            setShowBridgeModal(false);
           }}
         />
 
@@ -532,71 +454,20 @@ export function StablecoinsPool() {
           </div>
 
           {activeTab === 'RULES' && (
-            <motion.div
-              style={styles.tabContent}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.2 }}
-            >
-              <div style={styles.rulesGrid}>
-                <div style={styles.ruleCard}>
-                  <div style={styles.ruleNumber}>1</div>
-                  <div style={styles.ruleText}>
-                    <strong>Deposit during the 24-hour window</strong> at the start of each week
-                  </div>
-                </div>
-                <div style={styles.ruleCard}>
-                  <div style={styles.ruleNumber}>2</div>
-                  <div style={styles.ruleText}>
-                    <strong>Your deposit goes to Aave</strong> to earn yield (8% APY)
-                  </div>
-                </div>
-                <div style={styles.ruleCard}>
-                  <div style={styles.ruleNumber}>3</div>
-                  <div style={styles.ruleText}>
-                    <strong>1 USDC = 1 Ticket</strong> - More deposits = higher win chance
-                  </div>
-                </div>
-                <div style={styles.ruleCard}>
-                  <div style={styles.ruleNumber}>4</div>
-                  <div style={styles.ruleText}>
-                    <strong>Weekly draw via Chainlink VRF</strong> - provably random winner
-                  </div>
-                </div>
-                <div style={styles.ruleCard}>
-                  <div style={styles.ruleNumber}>5</div>
-                  <div style={styles.ruleText}>
-                    <strong>Winner gets ALL yield</strong> - your principal is always safe
-                  </div>
-                </div>
-                <div style={styles.ruleCard}>
-                  <div style={styles.ruleNumber}>6</div>
-                  <div style={styles.ruleText}>
-                    <strong>Withdraw anytime</strong> - get principal back, forfeit yield
-                  </div>
-                </div>
-              </div>
+            <motion.div style={styles.tabContent} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>
+              <ol style={styles.rulesList}>
+                <li style={styles.ruleItem}><strong>Deposit stablecoins into the pool to get tickets.</strong></li>
+                <li style={styles.ruleItem}><strong>1 USDC = 1 Ticket. More tickets = higher chance to win.</strong></li>
+              </ol>
             </motion.div>
           )}
-
           {activeTab === 'WINNERS' && (
-            <motion.div
-              style={styles.tabContent}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.2 }}
-            >
+            <motion.div style={styles.tabContent} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>
               <p style={styles.comingSoon}>🏆 Winners history coming soon...</p>
             </motion.div>
           )}
-
           {activeTab === 'ACTIVITY' && (
-            <motion.div
-              style={styles.tabContent}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.2 }}
-            >
+            <motion.div style={styles.tabContent} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>
               <p style={styles.comingSoon}>📊 Activity feed coming soon...</p>
             </motion.div>
           )}
@@ -607,590 +478,62 @@ export function StablecoinsPool() {
 }
 
 const styles = {
-  container: {
-    minHeight: '100vh',
-    background: '#ffffff',
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  content: {
-    maxWidth: '1400px',
-    margin: '0 auto',
-    padding: '100px 40px 40px',
-    position: 'relative',
-    zIndex: 1,
-  },
-  backButton: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    background: 'transparent',
-    border: 'none',
-    fontFamily: '"Comic Neue", cursive',
-    fontSize: '14px',
-    fontWeight: '600',
-    color: '#1a1a1a',
-    cursor: 'pointer',
-    padding: '0',
-    marginBottom: '30px',
-    transition: 'all 0.2s',
-  },
-  titleSection: {
-    textAlign: 'center',
-    marginBottom: '40px',
-  },
-  iconCircle: {
-    width: '80px',
-    height: '80px',
-    borderRadius: '50%',
-    background: '#06d6a0',
-    border: '5px solid #1a1a1a',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '48px',
-    fontWeight: '900',
-    color: '#1a1a1a',
-    margin: '0 auto 20px',
-    boxShadow: '8px 8px 0 #1a1a1a',
-  },
-  title: {
-    fontFamily: '"Fredoka", sans-serif',
-    fontSize: '48px',
-    fontWeight: '900',
-    color: '#1a1a1a',
-    margin: '0 0 12px',
-    textTransform: 'uppercase',
-    letterSpacing: '-1px',
-  },
-  subtitle: {
-    fontFamily: '"Comic Neue", cursive',
-    fontSize: '18px',
-    fontWeight: '600',
-    color: '#666',
-    marginBottom: '20px',
-  },
-  badges: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '12px',
-    flexWrap: 'wrap',
-  },
-  badgeCyan: {
-    fontFamily: '"Comic Neue", cursive',
-    fontSize: '14px',
-    fontWeight: '700',
-    color: '#1a1a1a',
-    background: '#00d4ff',
-    padding: '8px 20px',
-    borderRadius: '20px',
-    border: '3px solid #1a1a1a',
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
-  },
-  badgeGrey: {
-    fontFamily: '"Comic Neue", cursive',
-    fontSize: '14px',
-    fontWeight: '700',
-    color: '#1a1a1a',
-    background: '#e0e0e0',
-    padding: '8px 20px',
-    borderRadius: '20px',
-    border: '3px solid #1a1a1a',
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
-  },
-  badgeYellow: {
-    fontFamily: '"Comic Neue", cursive',
-    fontSize: '14px',
-    fontWeight: '700',
-    color: '#1a1a1a',
-    background: '#ffd23f',
-    padding: '8px 20px',
-    borderRadius: '20px',
-    border: '3px solid #1a1a1a',
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
-  },
-  warningBanner: {
-    background: '#fff3cd',
-    border: '4px solid #ffc107',
-    borderRadius: '16px',
-    padding: '16px 24px',
-    marginBottom: '30px',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    fontFamily: '"Comic Neue", cursive',
-    fontSize: '16px',
-    fontWeight: '700',
-    color: '#856404',
-  },
-  mainGrid: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 450px',
-    gap: '30px',
-    marginBottom: '40px',
-  },
-  prizeCard: {
-    background: '#ffffff',
-    border: '5px solid #1a1a1a',
-    borderRadius: '20px',
-    padding: '40px',
-    boxShadow: '12px 12px 0 #1a1a1a',
-    transition: 'all 0.2s',
-  },
-  prizeHeader: {
-    marginBottom: '30px',
-  },
-  prizeLabel: {
-    fontFamily: '"Comic Neue", cursive',
-    fontSize: '16px',
-    fontWeight: '700',
-    color: '#666',
-    margin: '0 0 10px',
-    textTransform: 'uppercase',
-    letterSpacing: '1px',
-  },
-  prizeAmount: {
-    fontFamily: '"Fredoka", sans-serif',
-    fontSize: '72px',
-    fontWeight: '900',
-    color: '#06d6a0',
-    margin: '0 0 8px',
-    lineHeight: '1',
-  },
-  yieldNote: {
-    fontFamily: '"Comic Neue", cursive',
-    fontSize: '14px',
-    fontWeight: '600',
-    color: '#666',
-    fontStyle: 'italic',
-  },
-  prizeDetails: {
-    marginBottom: '30px',
-  },
-  detailRow: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '20px',
-  },
-  detailItem: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-  },
-  detailLabel: {
-    fontFamily: '"Comic Neue", cursive',
-    fontSize: '12px',
-    fontWeight: '600',
-    color: '#666',
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
-  },
-  detailValue: {
-    fontFamily: '"Fredoka", sans-serif',
-    fontSize: '24px',
-    fontWeight: '900',
-    color: '#1a1a1a',
-  },
-  userBalanceCard: {
-    background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
-    border: '4px solid #1a1a1a',
-    borderRadius: '16px',
-    padding: '24px',
-    marginBottom: '30px',
-  },
-  balanceTitle: {
-    fontFamily: '"Fredoka", sans-serif',
-    fontSize: '18px',
-    fontWeight: '900',
-    color: '#1a1a1a',
-    margin: '0 0 16px',
-    textTransform: 'uppercase',
-  },
-  balanceGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(3, 1fr)',
-    gap: '16px',
-  },
-  balanceLabel: {
-    fontFamily: '"Comic Neue", cursive',
-    fontSize: '12px',
-    fontWeight: '600',
-    color: '#666',
-    marginBottom: '4px',
-  },
-  balanceValue: {
-    fontFamily: '"Fredoka", sans-serif',
-    fontSize: '20px',
-    fontWeight: '900',
-    color: '#1a1a1a',
-  },
-  progressSection: {
-    marginTop: '30px',
-  },
-  progressHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '10px',
-  },
-  progressLabel: {
-    fontFamily: '"Comic Neue", cursive',
-    fontSize: '14px',
-    fontWeight: '600',
-    color: '#1a1a1a',
-  },
-  progressAmount: {
-    fontFamily: '"Comic Neue", cursive',
-    fontSize: '14px',
-    fontWeight: '600',
-    color: '#666',
-  },
-  progressBarContainer: {
-    width: '100%',
-    height: '32px',
-    background: '#f0f0f0',
-    border: '4px solid #1a1a1a',
-    borderRadius: '16px',
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  progressBarFill: {
-    height: '100%',
-    background: '#06d6a0',
-    transition: 'width 1s ease-out',
-  },
-  depositCard: {
-    background: '#ffffff',
-    border: '5px solid #1a1a1a',
-    borderRadius: '20px',
-    padding: '30px',
-    boxShadow: '12px 12px 0 #1a1a1a',
-    transition: 'all 0.2s',
-  },
-  modeToggle: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: '8px',
-    marginBottom: '24px',
-  },
-  modeButton: {
-    fontFamily: '"Fredoka", sans-serif',
-    fontSize: '16px',
-    fontWeight: '700',
-    color: '#666',
-    background: '#f5f5f5',
-    border: '3px solid #1a1a1a',
-    borderRadius: '12px',
-    padding: '12px',
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-  },
-  modeButtonActive: {
-    background: '#00d4ff',
-    color: '#1a1a1a',
-    fontWeight: '900',
-    boxShadow: '4px 4px 0 #1a1a1a',
-  },
-  depositTitle: {
-    fontFamily: '"Fredoka", sans-serif',
-    fontSize: '24px',
-    fontWeight: '900',
-    color: '#1a1a1a',
-    margin: '0 0 8px',
-    textTransform: 'uppercase',
-  },
-  depositSubtitle: {
-    fontFamily: '"Comic Neue", cursive',
-    fontSize: '14px',
-    fontWeight: '600',
-    color: '#666',
-    margin: '0 0 30px',
-    lineHeight: '1.5',
-  },
-  depositForm: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '20px',
-  },
-  inputSection: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px',
-  },
-  inputHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  inputLabel: {
-    fontFamily: '"Comic Neue", cursive',
-    fontSize: '14px',
-    fontWeight: '700',
-    color: '#1a1a1a',
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
-  },
-  balanceText: {
-    fontFamily: '"Comic Neue", cursive',
-    fontSize: '14px',
-    fontWeight: '600',
-    color: '#666',
-  },
-  inputWrapper: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    background: '#f5f5f5',
-    border: '4px solid #1a1a1a',
-    borderRadius: '12px',
-    padding: '12px 16px',
-  },
-  input: {
-    flex: 1,
-    background: 'transparent',
-    border: 'none',
-    outline: 'none',
-    fontFamily: '"Fredoka", sans-serif',
-    fontSize: '24px',
-    fontWeight: '700',
-    color: '#1a1a1a',
-  },
-  maxButton: {
-    fontFamily: '"Comic Neue", cursive',
-    fontSize: '14px',
-    fontWeight: '700',
-    color: '#00d4ff',
-    background: 'transparent',
-    border: 'none',
-    cursor: 'pointer',
-    padding: '0',
-    textTransform: 'uppercase',
-    transition: 'all 0.2s',
-  },
-  receiveSection: {
-    background: '#f5f5f5',
-    border: '3px solid #1a1a1a',
-    borderRadius: '12px',
-    padding: '16px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px',
-  },
-  receiveRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  receiveLabel: {
-    fontFamily: '"Comic Neue", cursive',
-    fontSize: '14px',
-    fontWeight: '600',
-    color: '#666',
-  },
-  receiveValue: {
-    fontFamily: '"Fredoka", sans-serif',
-    fontSize: '16px',
-    fontWeight: '900',
-    color: '#1a1a1a',
-  },
-  warningBox: {
-    background: '#fff3cd',
-    border: '3px solid #ffc107',
-    borderRadius: '12px',
-    padding: '16px',
-    display: 'flex',
-    alignItems: 'flex-start',
-    gap: '12px',
-  },
-  warningTitle: {
-    fontFamily: '"Fredoka", sans-serif',
-    fontSize: '14px',
-    fontWeight: '900',
-    color: '#856404',
-    marginBottom: '4px',
-  },
-  warningText: {
-    fontFamily: '"Comic Neue", cursive',
-    fontSize: '13px',
-    fontWeight: '600',
-    color: '#856404',
-    lineHeight: '1.5',
-  },
-  depositButton: {
-    width: '100%',
-    fontFamily: '"Fredoka", sans-serif',
-    fontSize: '18px',
-    fontWeight: '900',
-    color: '#1a1a1a',
-    background: '#06d6a0',
-    border: '4px solid #1a1a1a',
-    borderRadius: '12px',
-    padding: '16px',
-    cursor: 'pointer',
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
-    boxShadow: '6px 6px 0 #1a1a1a',
-    transition: 'all 0.15s',
-  },
-  yellowButton: {
-    width: '100%',
-    fontFamily: '"Fredoka", sans-serif',
-    fontSize: '16px',
-    fontWeight: '900',
-    color: '#1a1a1a',
-    background: 'linear-gradient(135deg, #ffd23f 0%, #ffed4e 100%)',
-    border: '4px solid #1a1a1a',
-    borderRadius: '12px',
-    padding: '14px',
-    cursor: 'pointer',
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
-    boxShadow: '6px 6px 0 #1a1a1a',
-    transition: 'all 0.15s',
-    marginTop: '8px',
-  },
-  withdrawButton: {
-    width: '100%',
-    fontFamily: '"Fredoka", sans-serif',
-    fontSize: '18px',
-    fontWeight: '900',
-    color: '#ffffff',
-    background: '#dc3545',
-    border: '4px solid #1a1a1a',
-    borderRadius: '12px',
-    padding: '16px',
-    cursor: 'pointer',
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
-    boxShadow: '6px 6px 0 #1a1a1a',
-    transition: 'all 0.15s',
-  },
-  tabSection: {
-    background: '#ffffff',
-    border: '5px solid #1a1a1a',
-    borderRadius: '20px',
-    overflow: 'hidden',
-    boxShadow: '12px 12px 0 #1a1a1a',
-  },
-  tabs: {
-    display: 'flex',
-    borderBottom: '5px solid #1a1a1a',
-  },
-  tab: {
-    flex: 1,
-    fontFamily: '"Fredoka", sans-serif',
-    fontSize: '18px',
-    fontWeight: '600',
-    color: '#1a1a1a',
-    background: 'transparent',
-    border: 'none',
-    padding: '20px',
-    cursor: 'pointer',
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
-    transition: 'all 0.2s',
-    borderBottom: '5px solid transparent',
-  },
-  tabContent: {
-    padding: '40px',
-  },
-  rulesGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(2, 1fr)',
-    gap: '20px',
-  },
-  ruleCard: {
-    background: '#f8f9fa',
-    border: '3px solid #1a1a1a',
-    borderRadius: '16px',
-    padding: '24px',
-    display: 'flex',
-    gap: '16px',
-    alignItems: 'flex-start',
-  },
-  ruleNumber: {
-    width: '40px',
-    height: '40px',
-    borderRadius: '50%',
-    background: '#06d6a0',
-    border: '3px solid #1a1a1a',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontFamily: '"Fredoka", sans-serif',
-    fontSize: '20px',
-    fontWeight: '900',
-    color: '#1a1a1a',
-    flexShrink: 0,
-  },
-  ruleText: {
-    fontFamily: '"Comic Neue", cursive',
-    fontSize: '15px',
-    fontWeight: '600',
-    color: '#1a1a1a',
-    lineHeight: '1.6',
-  },
-  comingSoon: {
-    fontFamily: '"Comic Neue", cursive',
-    fontSize: '18px',
-    fontWeight: '600',
-    color: '#666',
-    textAlign: 'center',
-    margin: '40px 0',
-  },
-  settlementBanner: {
-    background: 'linear-gradient(135deg, #ffd23f 0%, #ffed4e 100%)',
-    border: '5px solid #1a1a1a',
-    borderRadius: '20px',
-    padding: '24px',
-    marginBottom: '24px',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    boxShadow: '12px 12px 0 #1a1a1a',
-    gap: '20px',
-  },
-  settlementContent: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '16px',
-    flex: 1,
-  },
-  settlementIcon: {
-    fontSize: '32px',
-  },
-  settlementTitle: {
-    fontFamily: '"Fredoka", sans-serif',
-    fontSize: '18px',
-    fontWeight: '900',
-    color: '#1a1a1a',
-    marginBottom: '4px',
-  },
-  settlementText: {
-    fontFamily: '"Comic Neue", cursive',
-    fontSize: '14px',
-    color: '#1a1a1a',
-    opacity: 0.8,
-  },
-  settlementButton: {
-    fontFamily: '"Fredoka", sans-serif',
-    fontSize: '16px',
-    fontWeight: '900',
-    color: '#1a1a1a',
-    background: '#ffffff',
-    border: '4px solid #1a1a1a',
-    borderRadius: '12px',
-    padding: '12px 24px',
-    cursor: 'pointer',
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
-    boxShadow: '4px 4px 0 #1a1a1a',
-    whiteSpace: 'nowrap',
-  },
+  container: { minHeight: '100vh', background: '#ffffff', position: 'relative', overflow: 'hidden' },
+  content: { maxWidth: '1400px', margin: '0 auto', padding: '100px 40px 40px', position: 'relative', zIndex: 1 },
+  backButton: { display: 'flex', alignItems: 'center', gap: '8px', background: 'transparent', border: 'none', fontFamily: '"Comic Neue", cursive', fontSize: '14px', fontWeight: '600', color: '#1a1a1a', cursor: 'pointer', padding: '0', marginBottom: '30px', transition: 'all 0.2s' },
+  titleSection: { textAlign: 'center', marginBottom: '40px' },
+  iconCircle: { width: '80px', height: '80px', borderRadius: '50%', background: '#06d6a0', border: '5px solid #1a1a1a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '48px', fontWeight: '900', color: '#1a1a1a', margin: '0 auto 20px', boxShadow: '8px 8px 0 #1a1a1a' },
+  title: { fontFamily: '"Fredoka", sans-serif', fontSize: '48px', fontWeight: '900', color: '#1a1a1a', margin: '0 0 20px', textTransform: 'uppercase', letterSpacing: '-1px' },
+  badges: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' },
+  badgeCyan: { fontFamily: '"Comic Neue", cursive', fontSize: '14px', fontWeight: '700', color: '#1a1a1a', background: '#00d4ff', padding: '8px 20px', borderRadius: '20px', border: '3px solid #1a1a1a', textTransform: 'uppercase', letterSpacing: '0.5px' },
+  badgeGrey: { fontFamily: '"Comic Neue", cursive', fontSize: '14px', fontWeight: '700', color: '#1a1a1a', background: '#e0e0e0', padding: '8px 20px', borderRadius: '20px', border: '3px solid #1a1a1a', textTransform: 'uppercase', letterSpacing: '0.5px' },
+  mainGrid: { display: 'grid', gridTemplateColumns: '1fr 400px', gap: '30px', marginBottom: '40px' },
+  prizeCard: { background: '#ffffff', border: '5px solid #1a1a1a', borderRadius: '20px', padding: '40px', boxShadow: '12px 12px 0 #1a1a1a', transition: 'all 0.2s' },
+  prizeHeader: { marginBottom: '30px' },
+  prizeLabel: { fontFamily: '"Comic Neue", cursive', fontSize: '16px', fontWeight: '700', color: '#666', margin: '0 0 10px', textTransform: 'uppercase', letterSpacing: '1px' },
+  prizeAmount: { fontFamily: '"Fredoka", sans-serif', fontSize: '72px', fontWeight: '900', color: '#06d6a0', margin: '0', lineHeight: '1' },
+  prizeDetails: { background: '#f8f9fa', border: '4px solid #1a1a1a', borderRadius: '16px', padding: '24px', marginBottom: '30px', position: 'relative' },
+  detailRow: { display: 'flex', gap: '30px', marginBottom: '10px' },
+  detailItem: { display: 'flex', alignItems: 'center', gap: '12px' },
+  detailLabel: { fontFamily: '"Comic Neue", cursive', fontSize: '12px', fontWeight: '600', color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px' },
+  detailValue: { fontFamily: '"Fredoka", sans-serif', fontSize: '20px', fontWeight: '900', color: '#1a1a1a' },
+  trophyIcon: { position: 'absolute', right: '20px', top: '20px', fontSize: '48px', opacity: 0.15 },
+  progressSection: { marginBottom: '30px' },
+  progressHeader: { display: 'flex', justifyContent: 'space-between', marginBottom: '10px' },
+  progressLabel: { fontFamily: '"Comic Neue", cursive', fontSize: '14px', fontWeight: '600', color: '#666' },
+  progressAmount: { fontFamily: '"Fredoka", sans-serif', fontSize: '14px', fontWeight: '900', color: '#1a1a1a' },
+  progressBarContainer: { height: '12px', background: '#e0e0e0', borderRadius: '6px', border: '3px solid #1a1a1a', overflow: 'hidden' },
+  progressBarFill: { height: '100%', background: 'linear-gradient(90deg, #06d6a0 0%, #00d4ff 100%)', borderRadius: '4px' },
+  statsGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginTop: '20px' },
+  statBox: { background: '#f8f9fa', border: '3px solid #1a1a1a', borderRadius: '12px', padding: '15px', textAlign: 'center' },
+  statLabel: { fontFamily: '"Comic Neue", cursive', fontSize: '12px', fontWeight: '600', color: '#666', marginBottom: '5px', textTransform: 'uppercase' },
+  statValue: { fontFamily: '"Fredoka", sans-serif', fontSize: '24px', fontWeight: '900', color: '#1a1a1a' },
+  depositCard: { background: '#ffffff', border: '5px solid #1a1a1a', borderRadius: '20px', padding: '40px', boxShadow: '12px 12px 0 #1a1a1a', transition: 'all 0.2s' },
+  depositTitle: { fontFamily: '"Fredoka", sans-serif', fontSize: '24px', fontWeight: '900', color: '#1a1a1a', margin: '0 0 10px', textTransform: 'uppercase', letterSpacing: '-0.5px' },
+  depositSubtitle: { fontFamily: '"Comic Neue", cursive', fontSize: '16px', fontWeight: '600', color: '#666', marginBottom: '30px' },
+  depositForm: { marginBottom: '20px' },
+  inputGroup: { position: 'relative', marginBottom: '10px' },
+  input: { width: '100%', fontFamily: '"Fredoka", sans-serif', fontSize: '32px', fontWeight: '900', color: '#1a1a1a', background: '#f8f9fa', border: '4px solid #1a1a1a', borderRadius: '12px', padding: '20px', paddingRight: '80px', outline: 'none', transition: 'all 0.2s' },
+  inputLabel: { position: 'absolute', right: '20px', top: '50%', transform: 'translateY(-50%)', fontFamily: '"Fredoka", sans-serif', fontSize: '20px', fontWeight: '900', color: '#666' },
+  inputInfo: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', paddingLeft: '5px' },
+  inputInfoText: { fontFamily: '"Comic Neue", cursive', fontSize: '14px', fontWeight: '600', color: '#666' },
+  maxButton: { fontFamily: '"Comic Neue", cursive', fontSize: '14px', fontWeight: '700', color: '#00d4ff', background: 'transparent', border: 'none', cursor: 'pointer', textDecoration: 'underline' },
+  depositButton: { width: '100%', fontFamily: '"Fredoka", sans-serif', fontSize: '18px', fontWeight: '900', color: '#1a1a1a', background: '#00d4ff', border: '4px solid #1a1a1a', borderRadius: '12px', padding: '16px', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.5px', boxShadow: '6px 6px 0 #1a1a1a', transition: 'all 0.2s', marginBottom: '15px' },
+  alternativeButton: { width: '100%', fontFamily: '"Comic Neue", cursive', fontSize: '14px', fontWeight: '700', color: '#1a1a1a', background: '#f8f9fa', border: '3px solid #1a1a1a', borderRadius: '12px', padding: '12px', cursor: 'pointer', textTransform: 'uppercase', transition: 'all 0.2s' },
+  bridgeButton: { width: '100%', fontFamily: '"Fredoka", sans-serif', fontSize: '16px', fontWeight: '900', color: '#1a1a1a', background: '#00d4ff', border: '4px solid #1a1a1a', borderRadius: '12px', padding: '14px', cursor: 'pointer', textTransform: 'uppercase', transition: 'all 0.2s', boxShadow: '6px 6px 0 #1a1a1a', marginBottom: '15px' },
+  divider: { textAlign: 'center', fontFamily: '"Comic Neue", cursive', fontSize: '14px', fontWeight: '700', color: '#999', margin: '15px 0', position: 'relative' },
+  demoButton: { width: '100%', fontFamily: '"Fredoka", sans-serif', fontSize: '16px', fontWeight: '900', color: '#1a1a1a', background: '#ffd23f', border: '4px solid #1a1a1a', borderRadius: '12px', padding: '14px', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.5px', boxShadow: '6px 6px 0 #1a1a1a', transition: 'all 0.2s', marginBottom: '15px' },
+  errorBox: { background: '#fff0f0', border: '3px solid #ff4d6d', borderRadius: '8px', padding: '12px', fontFamily: '"Comic Neue", cursive', fontSize: '14px', fontWeight: '600', color: '#ff4d6d', marginBottom: '15px' },
+  infoBox: { background: '#f0f9ff', border: '3px solid #00d4ff', borderRadius: '12px', padding: '15px', display: 'flex', gap: '10px', alignItems: 'flex-start' },
+  infoEmoji: { fontSize: '20px', flexShrink: 0 },
+  infoText: { fontFamily: '"Comic Neue", cursive', fontSize: '14px', fontWeight: '600', color: '#1a1a1a', lineHeight: '1.5', margin: 0 },
+  tabSection: { background: '#ffffff', border: '5px solid #1a1a1a', borderRadius: '20px', overflow: 'hidden', boxShadow: '12px 12px 0 #1a1a1a' },
+  tabs: { display: 'flex', borderBottom: '5px solid #1a1a1a' },
+  tab: { flex: 1, fontFamily: '"Fredoka", sans-serif', fontSize: '18px', color: '#1a1a1a', background: 'transparent', border: 'none', padding: '20px', cursor: 'pointer', textTransform: 'uppercase', transition: 'all 0.2s', borderBottom: '5px solid transparent' },
+  tabContent: { padding: '40px' },
+  rulesList: { fontFamily: '"Comic Neue", cursive', fontSize: '16px', fontWeight: '600', color: '#1a1a1a', lineHeight: '1.8', paddingLeft: '20px' },
+  ruleItem: { marginBottom: '16px' },
+  comingSoon: { fontFamily: '"Comic Neue", cursive', fontSize: '18px', fontWeight: '600', color: '#666', textAlign: 'center', margin: '40px 0' },
 };
 
 export default StablecoinsPool;

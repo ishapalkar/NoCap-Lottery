@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Zap, Clock, DollarSign, X, CheckCircle } from 'lucide-react';
-import { useYellowNetwork } from '../hooks/useYellowNetwork';
+import { useYellowNetwork } from '../contexts/YellowNetworkContext';
 import { useState } from 'react';
 
 export function YellowSessionBanner() {

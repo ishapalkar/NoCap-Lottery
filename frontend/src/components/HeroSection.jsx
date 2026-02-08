@@ -83,7 +83,7 @@ export function HeroSection() {
             </button>
             
             <button
-              onClick={() => window.scrollTo({top: window.innerHeight, behavior: 'smooth'})} 
+              onClick={() => navigate('/how-it-works')} 
               style={styles.secondaryButton}
               className="btn-bounce"
             >

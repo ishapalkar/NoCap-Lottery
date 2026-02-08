@@ -41,18 +41,11 @@ export function Header() {
             Play Game
           </button>
           <button 
-            onClick={() => {
-              const winnersSection = document.getElementById('winners');
-              if (winnersSection) {
-                winnersSection.scrollIntoView({ behavior: 'smooth' });
-              } else {
-                navigate('/');
-                setTimeout(() => {
-                  document.getElementById('winners')?.scrollIntoView({ behavior: 'smooth' });
-                }, 100);
-              }
-            }} 
-            style={styles.navLink}
+            onClick={() => navigate('/winners')} 
+            style={{ 
+              ...styles.navLink,
+              ...(isActive('/winners') && styles.navLinkActive)
+            }}
           >
             Winners
           </button>

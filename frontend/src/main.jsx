@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RainbowKitProvider, lightTheme } from '@rainbow-me/rainbowkit'
 import { config } from './config/wagmi'
 import { sepolia } from 'wagmi/chains'
+import { YellowNetworkProvider } from './contexts/YellowNetworkContext'
 import './index.css'
 import './rainbowkit-custom.css'
 import '@rainbow-me/rainbowkit/styles.css'
@@ -26,9 +27,11 @@ createRoot(document.getElementById('root')).render(
           initialChain={sepolia}
           modalSize="compact"
         >
-          <BrowserRouter>
-            <App />
-          </BrowserRouter>
+          <YellowNetworkProvider>
+            <BrowserRouter>
+              <App />
+            </BrowserRouter>
+          </YellowNetworkProvider>
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>
