@@ -4,7 +4,7 @@ import { useAccount } from 'wagmi';
 import { useEnsName, useEnsAvatar } from 'wagmi';
 import { useNavigate } from 'react-router-dom';
 import { sepolia } from 'wagmi/chains';
-import { ArrowLeft, ExternalLink, Users, Plus } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Users, Plus, Trash2 } from 'lucide-react';
 import { useDemoPrizePool } from '../hooks/useDemoPrizePool';
 import { useLotteryPoolUSDC } from '../hooks/useLotteryPoolUSDC';
 import { useUSDCBalance } from '../hooks/useUSDCApproval';
@@ -12,14 +12,18 @@ import { useUSDCApproval, useUSDCAllowance } from '../hooks/useUSDCApproval';
 import { formatUnits } from 'viem';
 
 const DEMO_PRIZE_POOL_ADDRESS = import.meta.env.VITE_USDC_DEMO;
+const LOTTERY_POOL_ADDRESS = import.meta.env.VITE_USDC_LOTTERY;
 const USDC_ADDRESS = import.meta.env.VITE_USDC_ADDRESS;
 
-// List of 1000 wallet addresses with ENS domains for Sepolia testnet
+// Mock participants with real ENS addresses on Sepolia testnet
 const MOCK_PARTICIPANTS = [
-  '0x1234567890123456789012345678901234567890',
-  '0x2345678901234567890123456789012345678901',
-  '0x3456789012345678901234567890123456789012',
-  // ... (shortened for brevity - we'll use first 3 for demo)
+  '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045', // vitalik.eth
+  '0x225f137127d9067788314bc7fcc1f36746a3c3B5', // lootproject.eth
+  '0x983110309620D911731Ac0932219af06091b6744', // brantly.eth
+  '0xb8c2C29ee19D8307cb7255e1Cd9CbDE883A267d5', // nick.eth
+  '0x0904Dac3347eA47d208F3Fd67402D039a3b99859', // fireflies.eth
+  '0x866B3c4994e1416B7C738B9818b31dC246b95eee', // coopahtroopa.eth
+  '0x54Be3a794282C030b15E43aE2bB182E14c409C5e', // pranksy.eth
 ];
 
 function DemoPrize() {
@@ -55,22 +59,35 @@ function DemoPrize() {
   const [mockParticipantCount, setMockParticipantCount] = useState(10);
   const [showBonusInfo, setShowBonusInfo] = useState(false);
   const [mockParticipants, setMockParticipants] = useState([]); // Demo mock participants
+  const [userTickets, setUserTickets] = useState([]); // User's free tickets (array of wallet addresses)
+  const [ticketCount, setTicketCount] = useState(1); // Number of free tickets
   
-  // Approval and deposit hooks
+  // Approval and deposit hooks for demo prize/bonus
   const { approve: approvePrize, isPending: approvingPrize, isSuccess: approvePrizeSuccess } = useUSDCApproval(DEMO_PRIZE_POOL_ADDRESS);
   const { approve: approveBonus, isPending: approvingBonus, isSuccess: approveBonusSuccess } = useUSDCApproval(DEMO_PRIZE_POOL_ADDRESS);
   const { allowance: prizeAllowance, refetch: refetchPrizeAllowance } = useUSDCAllowance(address, DEMO_PRIZE_POOL_ADDRESS);
   const { allowance: bonusAllowance, refetch: refetchBonusAllowance } = useUSDCAllowance(address, DEMO_PRIZE_POOL_ADDRESS);
-
+  
   // Calculate real values from contracts
   const prizeAmount = prizePool ? Number(formatUnits(prizePool, 6)) : 0;
   const bonusAmount = bonusPool ? Number(formatUnits(bonusPool, 6)) : 0;
   const totalPrize = prizeAmount + bonusAmount;
-  const totalParticipants = mockParticipants.length; // Use demo mock participants
+  const allParticipants = [...userTickets, ...mockParticipants]; // All demo participants
+  const totalParticipants = allParticipants.length;
 
   // Check if approvals are needed
   const needsPrizeApproval = fundPrizeAmount && parseFloat(fundPrizeAmount) > 0 && prizeAllowance < parseFloat(fundPrizeAmount);
   const needsBonusApproval = fundBonusAmount && parseFloat(fundBonusAmount) > 0 && bonusAllowance < parseFloat(fundBonusAmount);
+
+  // Auto-calculate yield based on tickets (each ticket = $100 principal, ~7% APY)
+  useEffect(() => {
+    const totalTickets = userTickets.length + mockParticipants.length;
+    if (totalTickets > 0) {
+      const principal = totalTickets * 100;
+      const monthlyYield = principal * (0.07 / 12); // 7% APY divided by 12 months
+      setFundPrizeAmount(monthlyYield.toFixed(2));
+    }
+  }, [userTickets.length, mockParticipants.length]);
 
   // Generate confetti particles
   const generateConfetti = () => {
@@ -89,35 +106,71 @@ function DemoPrize() {
   };
 
   const handleDrawWinner = async () => {
-    if (isSpinning || totalParticipants === 0) {
-      alert('⚠️ No participants! Add mock participants first.');
-      return;
-    }
+    if (isSpinning) return;
 
     if (!isConnected) {
       alert('⚠️ Connect your wallet to draw a winner!');
       return;
     }
 
-    // Check minimum prize requirement (MIN_PRIZE = 10 USDC in contract)
-    if (totalPrize < 10) {
-      alert(`⚠️ Prize pool too small! Need at least $10 USDC to draw.
-      
-Current prize pool: $${totalPrize.toFixed(2)}
-Please fund the prize pool with at least $${(10 - totalPrize).toFixed(2)} more USDC.`);
+    // Check minimum prize requirement
+    const totalPrizeAmount = prizeAmount + (lotteryData.bonusPool || 0);
+    if (totalPrizeAmount < 10) {
+      alert(`⚠️ Prize pool too small! Need at least $10 USDC to draw.\n\nCurrent total prize: $${totalPrizeAmount.toFixed(2)}\nPlease fund the prize pool with at least $${(10 - totalPrizeAmount).toFixed(2)} more USDC.`);
       return;
     }
-    
+
+    // Check if there are any participants
+    if (allParticipants.length === 0) {
+      alert('⚠️ No participants!\n\nPlease:\n1. Get free tickets for yourself, OR\n2. Add mock participants for simulation');
+      return;
+    }
+
+    // Draw winner locally from all participants
     setIsSpinning(true);
     setIsLeverPulled(true);
     setShowWinner(false);
     setWinner(null);
 
-    // Simulate draw - randomly select from mock participants
-    setTimeout(() => {
-      const randomIndex = Math.floor(Math.random() * mockParticipants.length);
-      setWinner(mockParticipants[randomIndex]);
+    console.log('🎰 Drawing winner from', allParticipants.length, 'participants');
+    
+    setTimeout(async () => {
+      const randomIndex = Math.floor(Math.random() * allParticipants.length);
+      const selectedWinner = allParticipants[randomIndex];
+      setWinner(selectedWinner);
       completeAnimation();
+      
+      // Check if winner is a mock participant
+      const isMockParticipant = mockParticipants.includes(selectedWinner);
+      
+      if (!isMockParticipant) {
+        // Real user won - transfer actual USDC via smart contract
+        try {
+          console.log('💰 Transferring USDC to real winner:', selectedWinner);
+          await drawDemoWinner(lotteryData.currentRound);
+          setTimeout(() => {
+            alert(
+              `🎉 WINNER!\n\n` +
+              `Winner: ${selectedWinner.slice(0, 6)}...${selectedWinner.slice(-4)}\n` +
+              `Prize: $${totalPrizeAmount.toFixed(2)} USDC\n\n` +
+              `💸 USDC transferred to winner's wallet!`
+            );
+          }, 1000);
+        } catch (error) {
+          console.error('USDC transfer failed:', error);
+          alert(`❌ Winner drawn but USDC transfer failed: ${error.message || 'Unknown error'}`);
+        }
+      } else {
+        // Mock participant won - no USDC transfer
+        setTimeout(() => {
+          alert(
+            `🎉 WINNER! (Mock Participant)\n\n` +
+            `Winner: ${selectedWinner.slice(0, 6)}...${selectedWinner.slice(-4)}\n` +
+            `Prize: $${totalPrizeAmount.toFixed(2)} USDC\n\n` +
+            `⚠️ No USDC transferred (mock participant)`
+          );
+        }, 1000);
+      }
     }, 3000);
   };
 
@@ -199,25 +252,59 @@ Please fund the prize pool with at least $${(10 - totalPrize).toFixed(2)} more U
     }
   };
 
+  const handleBuyTickets = () => {
+    if (!isConnected) {
+      alert('⚠️ Please connect your wallet first!');
+      return;
+    }
+
+    if (ticketCount <= 0) {
+      alert('⚠️ Please select at least 1 ticket!');
+      return;
+    }
+
+    // Add user's wallet address X times (one per ticket) - FREE!
+    const newTickets = Array(ticketCount).fill(address);
+    setUserTickets(prev => [...prev, ...newTickets]);
+    
+    alert(
+      `✅ Added ${ticketCount} FREE ticket${ticketCount > 1 ? 's' : ''} for you!\n\n` +
+      `Your wallet: ${address.slice(0, 6)}...${address.slice(-4)}\n` +
+      `Your total entries: ${userTickets.length + ticketCount}\n\n` +
+      `💡 Demo Mode: Tickets are completely free!`
+    );
+    setTicketCount(1); // Reset to 1 ticket
+  };
+
   const handleAddMockParticipants = () => {
     if (!isConnected) {
       alert('Please connect your wallet first');
       return;
     }
     
-    // Generate mock participant addresses
-    const generateMockAddress = (index) => {
-      const randomHex = Math.floor(Math.random() * 0xFFFFFFFFFFFF).toString(16).padStart(12, '0');
-      return `0x${index.toString().padStart(4, '0')}${randomHex}${'0'.repeat(24)}`;
-    };
-    
     const newParticipants = [];
-    for (let i = 0; i < mockParticipantCount; i++) {
-      newParticipants.push(generateMockAddress(mockParticipants.length + i + 1));
+    
+    // Add user's wallet address first
+    if (address && !mockParticipants.includes(address)) {
+      newParticipants.push(address);
+    }
+    
+    // Add mock participants from the ENS list
+    const remainingCount = mockParticipantCount - 1; // -1 because we added user's address
+    for (let i = 0; i < remainingCount && i < MOCK_PARTICIPANTS.length; i++) {
+      const mockAddress = MOCK_PARTICIPANTS[i];
+      if (!mockParticipants.includes(mockAddress)) {
+        newParticipants.push(mockAddress);
+      }
     }
     
     setMockParticipants(prev => [...prev, ...newParticipants]);
-    alert(`✅ Added ${mockParticipantCount} mock participants! Total: ${mockParticipants.length + newParticipants.length}`);
+    alert(`✅ Added ${newParticipants.length} participants (including your wallet)! Total: ${mockParticipants.length + newParticipants.length}`);
+  };
+
+  const handleClearMockParticipants = () => {
+    setMockParticipants([]);
+    alert('🗑️ All mock participants cleared!');
   };
 
   // Auto-deposit after prize approval succeeds
@@ -292,9 +379,9 @@ Please fund the prize pool with at least $${(10 - totalPrize).toFixed(2)} more U
           transition={{ duration: 0.5 }}
           style={styles.header}
         >
-          <h1 style={styles.title}>🎰 Lottery Draw Simulation</h1>
+          <h1 style={styles.title}>🎰 Demo Lottery Draw</h1>
           <p style={styles.subtitle}>
-            Fund prize pool, deposit USDC to lottery, then draw a winner using Chainlink VRF!
+            1️⃣ Get free tickets → 2️⃣ Add mock participants → 3️⃣ Fund prize pool (yield) → 4️⃣ Draw winner!
           </p>
         </motion.div>
 
@@ -334,33 +421,33 @@ Please fund the prize pool with at least $${(10 - totalPrize).toFixed(2)} more U
           <div style={styles.statsGrid}>
             <div style={styles.statBox}>
               <div style={styles.statLabel}>Demo Prize Pool</div>
-              <div style={styles.statValue}>${totalPrize.toFixed(2)}</div>
+              <div style={styles.statValue}>${prizeAmount.toFixed(2)}</div>
               <div style={styles.statDesc}>USDC in demo contract</div>
             </div>
             <div style={styles.statBox}>
-              <div style={styles.statLabel}>
-                Lottery Bonus Pool
+              <div style={styles.statLabel}>Lottery Bonus Pool</div>
+              <div style={styles.statValue}>${lotteryData.bonusPool?.toFixed(2) || '0.00'}</div>
+              <div style={styles.statDesc}>
+                From lottery contract
                 <button 
                   onClick={() => setShowBonusInfo(!showBonusInfo)}
-                  style={styles.bonusLearnMore}
+                  style={styles.bonusLearnMoreFixed}
                   title="Learn about bonus pool"
                 >
-                  Learn more
+                  Learn more ↗
                 </button>
               </div>
-              <div style={styles.statValue}>${lotteryData.bonusPool?.toFixed(2) || '0.00'}</div>
-              <div style={styles.statDesc}>From lottery contract</div>
             </div>
             <div style={styles.statBox}>
               <div style={styles.statLabel}>Total Prize</div>
-              <div style={{...styles.statValue, color: '#06d6a0'}}>${(totalPrize + (lotteryData.bonusPool || 0)).toFixed(2)}</div>
+              <div style={{...styles.statValue, color: '#06d6a0'}}>${(prizeAmount + (lotteryData.bonusPool || 0)).toFixed(2)}</div>
               <div style={styles.statDesc}>Winner takes all</div>
             </div>
             <div style={styles.statBox}>
               <div style={styles.statLabel}>Participants</div>
               <div style={styles.statValue}>{totalParticipants}</div>
               <div style={styles.statDesc}>
-                {lotteryData.depositWindowOpen ? 'Deposits open' : 'Window closed'}
+                {userTickets.length > 0 ? `You: ${userTickets.length} ticket${userTickets.length > 1 ? 's' : ''}, Mock: ${mockParticipants.length}` : mockParticipants.length > 0 ? `${mockParticipants.length} mock only` : 'Add tickets or mock participants'}
               </div>
             </div>
           </div>
@@ -381,107 +468,78 @@ Please fund the prize pool with at least $${(10 - totalPrize).toFixed(2)} more U
           )}
         </motion.div>
 
-        {/* Fund Pools */}
-        {isConnected && (
-          <div style={styles.fundingGrid}>
-            {/* Fund Prize Pool */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.2 }}
-              style={styles.fundCard}
-              className="card-squishy"
-            >
-              <h3 style={styles.cardTitle}>💰 Fund Prize Pool</h3>
-              <p style={styles.fundDesc}>Add USDC to demo prize pool</p>
-              
-              <div style={styles.inputGroup}>
-                <input
-                  type="number"
-                  value={fundPrizeAmount}
-                  onChange={(e) => setFundPrizeAmount(e.target.value)}
-                  placeholder="0.00"
-                  style={styles.input}
-                />
-                <span style={styles.inputLabel}>USDC</span>
-              </div>
-              
-              <button
-                onClick={handleFundPrize}
-                disabled={!fundPrizeAmount || parseFloat(fundPrizeAmount) <= 0 || approvingPrize || parseFloat(fundPrizeAmount) > usdcBalance}
-                style={{
-                  ...styles.actionButton,
-                  ...((!fundPrizeAmount || approvingPrize || parseFloat(fundPrizeAmount) > usdcBalance) && styles.disabledButton),
-                  background: needsPrizeApproval ? '#ffd23f' : '#06d6a0',
-                }}
-                className="btn-bounce"
-              >
-                {parseFloat(fundPrizeAmount) > usdcBalance ? '⚠️ INSUFFICIENT BALANCE' :
-                 approvingPrize ? '⏳ APPROVING...' : 
-                 needsPrizeApproval ? '🔓 APPROVE USDC' :
-                 '💸 FUND PRIZE'}
-              </button>
-              {fundPrizeAmount && parseFloat(fundPrizeAmount) > 0 && needsPrizeApproval && (
-                <p style={styles.approvalNote}>After approval, funds will be deposited automatically</p>
-              )}
-            </motion.div>
-
-            {/* Fund Bonus Pool */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.25 }}
-              style={{...styles.fundCard, borderColor: '#ff4d6d'}}
-              className="card-squishy"
-            >
-              <h3 style={styles.cardTitle}>💎 Fund Bonus Pool</h3>
-              <p style={styles.fundDesc}>Add USDC to demo prize pool (tracked separately in events)</p>
-              
-              <div style={styles.inputGroup}>
-                <input
-                  type="number"
-                  value={fundBonusAmount}
-                  onChange={(e) => setFundBonusAmount(e.target.value)}
-                  placeholder="0.00"
-                  style={styles.input}
-                />
-                <span style={styles.inputLabel}>USDC</span>
-              </div>
-              
-              <button
-                onClick={handleFundBonus}
-                disabled={!fundBonusAmount || parseFloat(fundBonusAmount) <= 0 || approvingBonus || parseFloat(fundBonusAmount) > usdcBalance}
-                style={{
-                  ...styles.actionButton,
-                  ...((!fundBonusAmount || approvingBonus || parseFloat(fundBonusAmount) > usdcBalance) && styles.disabledButton),
-                  background: needsBonusApproval ? '#ffd23f' : '#ff4d6d',
-                }}
-                className="btn-bounce"
-              >
-                {parseFloat(fundBonusAmount) > usdcBalance ? '⚠️ INSUFFICIENT BALANCE' :
-                 approvingBonus ? '⏳ APPROVING...' : 
-                 needsBonusApproval ? '🔓 APPROVE USDC' :
-                 '💎 FUND BONUS'}
-              </button>
-              {fundBonusAmount && parseFloat(fundBonusAmount) > 0 && needsBonusApproval && (
-                <p style={styles.approvalNote}>After approval, funds will be deposited automatically</p>
-              )}
-            </motion.div>
-          </div>
-        )}
-
-        {/* Deposit to Lottery Pool */}
+        {/* Step 1: Buy Lottery Tickets */}
         {isConnected && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.3 }}
+            transition={{ duration: 0.3, delay: 0.2 }}
+            style={styles.mockCard}
+            className="card-squishy"
+          >
+            <div style={styles.mockHeader}>
+              <Users size={24} style={{ color: '#06d6a0' }} />
+              <h3 style={styles.cardTitle}>🎟️ Step 1: Get Free Demo Tickets</h3>
+            </div>
+            <p style={styles.fundDesc}>
+              Get FREE tickets to enter the demo lottery draw (no USDC required)
+            </p>
+            
+            <div style={styles.sliderGroup}>
+              <label style={styles.sliderLabel}>
+                Number of tickets: <strong>{ticketCount}</strong>
+              </label>
+              <input
+                type="range"
+                min="1"
+                max="20"
+                value={ticketCount}
+                onChange={(e) => setTicketCount(parseInt(e.target.value))}
+                style={styles.slider}
+              />
+              <div style={{ textAlign: 'center', marginTop: '16px' }}>
+                <div style={{ ...styles.sliderValue, color: '#06d6a0' }}>
+                  {ticketCount} {ticketCount > 1 ? 'Entries' : 'Entry'}
+                </div>
+                <p style={styles.participantCount}>
+                  Demo tickets for simulation
+                </p>
+              </div>
+            </div>
+            
+            <button
+              onClick={handleBuyTickets}
+              disabled={!isConnected}
+              style={{
+                ...styles.actionButton,
+                ...(!isConnected ? styles.disabledButton : {}),
+                background: '#06d6a0',
+              }}
+              className="btn-bounce"
+            >
+              {!isConnected ? '⚠️ CONNECT WALLET' : `🎟️ GET ${ticketCount} FREE TICKET${ticketCount > 1 ? 'S' : ''}`}
+            </button>
+            {userTickets.length > 0 && (
+              <p style={{...styles.participantCount, color: '#06d6a0', marginTop: '12px'}}>
+                ✅ You have {userTickets.length} ticket{userTickets.length > 1 ? 's' : ''}!
+              </p>
+            )}
+          </motion.div>
+        )}
+
+        {/* Step 2: Add Mock Participants */}
+        {/* Step 2: Add Mock Participants */}
+        {isConnected && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.25 }}
             style={styles.mockCard}
             className="card-squishy"
           >
             <div style={styles.mockHeader}>
               <Users size={24} style={{ color: '#00d4ff' }} />
-              <h3 style={styles.cardTitle}>Add Mock Participants</h3>
+              <h3 style={styles.cardTitle}>👥 Step 2: Add Mock Participants (Optional)</h3>
             </div>
             <p style={styles.fundDesc}>
               Add simulated participants for the demo draw (no USDC required)
@@ -520,7 +578,7 @@ Please fund the prize pool with at least $${(10 - totalPrize).toFixed(2)} more U
               </button>
               {mockParticipants.length > 0 && (
                 <button
-                  onClick={() => setMockParticipants([])}
+                  onClick={handleClearMockParticipants}
                   style={{
                     ...styles.actionButton,
                     background: '#ff4d6d',
@@ -528,14 +586,103 @@ Please fund the prize pool with at least $${(10 - totalPrize).toFixed(2)} more U
                   }}
                   className="btn-bounce"
                 >
-                  CLEAR ALL
+                  <Trash2 size={18} /> CLEAR ALL
                 </button>
               )}
             </div>
           </motion.div>
         )}
 
-        {/* Arcade Machine */}
+        {/* Step 3: Fund Prize Pools */}
+        {isConnected && (
+          <div style={styles.fundingGrid}>
+            {/* Fund Prize Pool */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.3 }}
+              style={styles.fundCard}
+              className="card-squishy"
+            >
+              <h3 style={styles.cardTitle}>💰 Step 3: Fund Prize Pool (Yield)</h3>
+              <p style={styles.fundDesc}>Add USDC to demo prize pool</p>
+              
+              <div style={styles.inputGroup}>
+                <input
+                  type="number"
+                  value={fundPrizeAmount}
+                  onChange={(e) => setFundPrizeAmount(e.target.value)}
+                  placeholder="0.00"
+                  style={styles.input}
+                />
+                <span style={styles.inputLabel}>USDC</span>
+              </div>
+              
+              <button
+                onClick={handleFundPrize}
+                disabled={!fundPrizeAmount || parseFloat(fundPrizeAmount) <= 0 || approvingPrize || parseFloat(fundPrizeAmount) > usdcBalance}
+                style={{
+                  ...styles.actionButton,
+                  ...((!fundPrizeAmount || approvingPrize || parseFloat(fundPrizeAmount) > usdcBalance) && styles.disabledButton),
+                  background: needsPrizeApproval ? '#ffd23f' : '#06d6a0',
+                }}
+                className="btn-bounce"
+              >
+                {parseFloat(fundPrizeAmount) > usdcBalance ? '⚠️ INSUFFICIENT BALANCE' :
+                 approvingPrize ? '⏳ APPROVING...' : 
+                 needsPrizeApproval ? '🔓 APPROVE USDC' :
+                 '💸 FUND PRIZE'}
+              </button>
+              {fundPrizeAmount && parseFloat(fundPrizeAmount) > 0 && needsPrizeApproval && (
+                <p style={styles.approvalNote}>After approval, funds will be deposited automatically</p>
+              )}
+            </motion.div>
+
+            {/* Fund Bonus Pool */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.35 }}
+              style={{...styles.fundCard, borderColor: '#ff4d6d'}}
+              className="card-squishy"
+            >
+              <h3 style={styles.cardTitle}>💎 Fund Lottery Bonus Pool</h3>
+              <p style={styles.fundDesc}>Add USDC to the lottery bonus pool (shown in stats above)</p>
+              
+              <div style={styles.inputGroup}>
+                <input
+                  type="number"
+                  value={fundBonusAmount}
+                  onChange={(e) => setFundBonusAmount(e.target.value)}
+                  placeholder="0.00"
+                  style={styles.input}
+                />
+                <span style={styles.inputLabel}>USDC</span>
+              </div>
+              
+              <button
+                onClick={handleFundBonus}
+                disabled={!fundBonusAmount || parseFloat(fundBonusAmount) <= 0 || approvingBonus || parseFloat(fundBonusAmount) > usdcBalance}
+                style={{
+                  ...styles.actionButton,
+                  ...((!fundBonusAmount || approvingBonus || parseFloat(fundBonusAmount) > usdcBalance) && styles.disabledButton),
+                  background: needsBonusApproval ? '#ffd23f' : '#ff4d6d',
+                }}
+                className="btn-bounce"
+              >
+                {parseFloat(fundBonusAmount) > usdcBalance ? '⚠️ INSUFFICIENT BALANCE' :
+                 approvingBonus ? '⏳ APPROVING...' : 
+                 needsBonusApproval ? '🔓 APPROVE USDC' :
+                 '💎 FUND BONUS'}
+              </button>
+              {fundBonusAmount && parseFloat(fundBonusAmount) > 0 && needsBonusApproval && (
+                <p style={styles.approvalNote}>After approval, funds will be deposited automatically</p>
+              )}
+            </motion.div>
+          </div>
+        )}
+
+        {/* Step 4: Draw Winner - Arcade Machine */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -559,7 +706,7 @@ Please fund the prize pool with at least $${(10 - totalPrize).toFixed(2)} more U
             />
           ))}
 
-          <h2 style={styles.arcadeTitle}>🎰 DRAW WINNER</h2>
+          <h2 style={styles.arcadeTitle}>🎰 STEP 4: DRAW WINNER</h2>
 
           {/* Prize Display */}
           <div style={styles.prizeDisplay}>
@@ -571,57 +718,56 @@ Please fund the prize pool with at least $${(10 - totalPrize).toFixed(2)} more U
               transition={{ duration: 0.3, repeat: isSpinning ? Infinity : 0 }}
               style={styles.prizeAmount2}
             >
-              {isSpinning ? '???' : `$${(totalPrize + (lotteryData.bonusPool || 0)).toFixed(2)}`}
+              {isSpinning ? '???' : `$${(prizeAmount + (lotteryData.bonusPool || 0)).toFixed(2)}`}
             </motion.div>
             <p style={styles.prizeLabel2}>
-              {isSpinning ? '⏳ WAITING FOR CHAINLINK VRF...' : 'TOTAL PRIZE'}
+              {isSpinning ? '⏳ DRAWING WINNER...' : 'TOTAL PRIZE'}
             </p>
           </div>
 
-          {/* Lever */}
-          <div style={styles.leverContainer}>
-            <motion.div
-              animate={{ rotate: isLeverPulled ? 45 : 0 }}
-              transition={{ duration: 0.3 }}
-              style={styles.leverStick}
-            />
+          {/* Single Draw Button */}
+          <div style={styles.drawButtonContainer}>
             <motion.button
-              whileHover={{ scale: totalParticipants > 0 && !isSpinning ? 1.05 : 1 }}
-              whileTap={{ scale: totalParticipants > 0 && !isSpinning ? 0.95 : 1 }}
+              whileHover={{ scale: !isSpinning ? 1.02 : 1 }}
+              whileTap={{ scale: !isSpinning ? 0.98 : 1 }}
               onClick={handleDrawWinner}
-              disabled={isSpinning || totalParticipants === 0}
+              disabled={isSpinning}
               style={{
-                ...styles.leverButton,
-                background: isSpinning || totalParticipants === 0 ? '#e0e0e0' : '#ffd23f',
-                cursor: isSpinning || totalParticipants === 0 ? 'not-allowed' : 'pointer',
+                ...styles.drawButton,
+                background: isSpinning ? 'linear-gradient(135deg, #999 0%, #666 100%)' : 'linear-gradient(135deg, #ffd23f 0%, #ff4d6d 100%)',
+                cursor: isSpinning ? 'not-allowed' : 'pointer',
+                opacity: isSpinning ? 0.7 : 1,
               }}
               className="btn-bounce"
             >
-              🎯
+              {isSpinning ? (
+                <>
+                  <motion.span
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                    style={{ display: 'inline-block', marginRight: '12px' }}
+                  >
+                    🎰
+                  </motion.span>
+                  DRAWING...
+                </>
+              ) : (
+                <>
+                  🎲 DRAW WINNER
+                </>
+              )}
             </motion.button>
-            <p style={styles.leverText}>
-              {isSpinning ? 'Waiting for VRF...' : 
-               totalParticipants === 0 ? 'Add participants first!' :
-               'PULL LEVER!'}
+            <p style={styles.drawInfo}>
+              {totalParticipants === 0 ? '⚠️ Add participants first' : `${totalParticipants} participants ready`}
             </p>
-            {isSpinning && (
-              <button
-                onClick={() => {
-                  setIsSpinning(false);
-                  setIsLeverPulled(false);
-                }}
-                style={styles.cancelButton}
-              >
-                Cancel Wait
-              </button>
-            )}
           </div>
 
-          {/* Winner Display */}
+          {/* Golden Ticket Winner Display */}
           {showWinner && winner && (
-            <WinnerDisplay 
+            <GoldenTicketWinner 
               address={winner} 
-              prize={totalPrize + (lotteryData.bonusPool || 0)}
+              prize={prizeAmount + (lotteryData.bonusPool || 0)}
+              confetti={confetti}
             />
           )}
         </motion.div>
@@ -652,34 +798,136 @@ Please fund the prize pool with at least $${(10 - totalPrize).toFixed(2)} more U
   );
 }
 
-// Winner Display Component
-function WinnerDisplay({ address, prize }) {
+// Golden Ticket Winner Component
+function GoldenTicketWinner({ address, prize, confetti }) {
   const { data: ensName } = useEnsName({ address, chainId: 11155111 });
   const { data: ensAvatar } = useEnsAvatar({ name: ensName, chainId: 11155111 });
 
+  const getInitials = (addr) => {
+    return addr ? addr.slice(2, 4).toUpperCase() : '??';
+  };
+
+  const avatarColor = address ? `hsl(${parseInt(address.slice(-6), 16) % 360}, 70%, 60%)` : '#00d4ff';
+
   return (
     <motion.div
-      initial={{ scale: 0, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      transition={{ type: 'spring', duration: 0.6 }}
+      initial={{ scale: 0, opacity: 0, rotate: -5 }}
+      animate={{ 
+        scale: 0.85,
+        opacity: 1,
+        rotate: 0
+      }}
+      transition={{ 
+        type: 'spring',
+        duration: 0.6,
+        delay: 0.2,
+        bounce: 0.4
+      }}
       style={styles.winnerCard}
     >
-      <h3 style={styles.winnerTitle}>🎉 WINNER! 🎉</h3>
-      <div style={styles.winnerInfo}>
-        {ensAvatar && (
+      {/* Confetti overlay */}
+      <div style={styles.confettiOverlay}>
+        {confetti.map((particle) => (
+          <motion.div
+            key={particle.id}
+            initial={{ y: -20, x: `${particle.x}%`, opacity: 1, rotate: 0 }}
+            animate={{ 
+              y: '100vh', 
+              opacity: 0, 
+              x: `${particle.x + (Math.random() * 20 - 10)}%`,
+              rotate: particle.rotation
+            }}
+            transition={{ duration: particle.duration, delay: particle.delay }}
+            style={{
+              ...styles.confettiParticle,
+              background: particle.color,
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Winner header */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4, type: 'spring', bounce: 0.5 }}
+        style={styles.winnerHeader}
+      >
+        <motion.div 
+          style={styles.winnerBadge}
+          animate={{ rotate: [0, 10, -10, 10, -10, 0] }}
+          transition={{ delay: 0.6, duration: 0.5 }}
+        >
+          🏆
+        </motion.div>
+        <h2 style={styles.winnerTitle}>WINNER!</h2>
+      </motion.div>
+
+      {/* Winner avatar */}
+      <motion.div
+        initial={{ scale: 0, rotate: -180 }}
+        animate={{ scale: 1, rotate: 0 }}
+        transition={{ type: 'spring', delay: 0.5, duration: 0.6, bounce: 0.5 }}
+        style={styles.winnerAvatarContainer}
+      >
+        {ensAvatar ? (
           <img 
             src={ensAvatar} 
-            alt="Winner avatar"
+            alt="Winner"
             style={styles.winnerAvatar}
           />
+        ) : (
+          <div style={{ ...styles.winnerAvatarFallback, background: avatarColor }}>
+            {getInitials(address)}
+          </div>
         )}
+      </motion.div>
+
+      {/* Winner info */}
+      <motion.div
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.6, type: 'spring', bounce: 0.4 }}
+        style={styles.winnerInfo}
+      >
         <div>
+          <p style={styles.winnerLabel}>WINNER ADDRESS</p>
           <p style={styles.winnerName}>
             {ensName || `${address?.slice(0, 6)}...${address?.slice(-4)}`}
           </p>
-          <p style={styles.winnerPrize}>Won ${prize.toFixed(2)} USDC!</p>
+          <p style={styles.winnerAddress}>
+            {address?.slice(0, 10)}...{address?.slice(-8)}
+          </p>
         </div>
-      </div>
+      </motion.div>
+
+      {/* Prize amount */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.8, rotate: 5 }}
+        animate={{ opacity: 1, scale: 1, rotate: 0 }}
+        transition={{ delay: 0.7, type: 'spring', bounce: 0.5 }}
+        style={styles.winnerPrizeBox}
+      >
+        <p style={styles.winnerPrizeLabel}>🎉 PRIZE WON 🎉</p>
+        <motion.p 
+          style={styles.winnerPrizeAmount}
+          animate={{ scale: [1, 1.05, 1] }}
+          transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
+        >
+          ${prize.toFixed(2)}
+        </motion.p>
+        <p style={styles.winnerPrizeCurrency}>USDC</p>
+      </motion.div>
+
+      {/* Decoration */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.8 }}
+        style={styles.winnerDecoration}
+      >
+        🎊 🎉 🎊 🎉 🎊
+      </motion.div>
     </motion.div>
   );
 }
@@ -874,6 +1122,20 @@ const styles = {
     fontWeight: '600',
     textDecoration: 'underline',
     transition: 'color 0.2s',
+  },
+  bonusLearnMoreFixed: {
+    background: 'transparent',
+    border: 'none',
+    color: '#ff4d6d',
+    cursor: 'pointer',
+    padding: '0',
+    marginLeft: '6px',
+    fontSize: '10px',
+    fontFamily: '"Comic Neue", cursive',
+    fontWeight: '600',
+    textDecoration: 'underline',
+    transition: 'color 0.2s',
+    display: 'inline',
   },
   statItem: {
     textAlign: 'center',
@@ -1154,53 +1416,6 @@ const styles = {
     boxShadow: '4px 4px 0 #1a1a1a',
     transition: 'all 0.2s',
   },
-  winnerCard: {
-    background: '#06d6a0',
-    border: '5px solid #1a1a1a',
-    borderRadius: '16px',
-    padding: '24px',
-    marginTop: '24px',
-    boxShadow: '8px 8px 0 #1a1a1a',
-  },
-  winnerTitle: {
-    fontSize: '28px',
-    fontWeight: 900,
-    fontFamily: '"Fredoka", sans-serif',
-    color: '#1a1a1a',
-    textAlign: 'center',
-    marginBottom: '16px',
-    textTransform: 'uppercase',
-  },
-  winnerInfo: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '16px',
-    justifyContent: 'center',
-    background: '#ffffff',
-    border: '3px solid #1a1a1a',
-    borderRadius: '12px',
-    padding: '16px',
-  },
-  winnerAvatar: {
-    width: '64px',
-    height: '64px',
-    borderRadius: '50%',
-    border: '4px solid #1a1a1a',
-    objectFit: 'cover',
-  },
-  winnerName: {
-    fontSize: '20px',
-    fontWeight: 900,
-    color: '#1a1a1a',
-    marginBottom: '4px',
-    fontFamily: '"Fredoka", sans-serif',
-  },
-  winnerPrize: {
-    fontSize: '16px',
-    color: '#06d6a0',
-    fontWeight: 700,
-    fontFamily: '"Comic Neue", cursive',
-  },
   connectCard: {
     background: '#fff0f5',
     border: '4px solid #ff4d6d',
@@ -1258,6 +1473,309 @@ const styles = {
     fontFamily: '"Comic Neue", cursive',
     fontWeight: '600',
     fontStyle: 'italic',
+  },
+  // Draw Button Styles
+  drawButtonContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '12px',
+    marginTop: '32px',
+    marginBottom: '32px',
+  },
+  drawButton: {
+    width: '100%',
+    maxWidth: '400px',
+    padding: '24px 48px',
+    border: '5px solid #1a1a1a',
+    borderRadius: '16px',
+    fontSize: '28px',
+    fontWeight: 900,
+    color: '#1a1a1a',
+    fontFamily: '"Fredoka", sans-serif',
+    textTransform: 'uppercase',
+    letterSpacing: '1px',
+    boxShadow: '10px 10px 0 #1a1a1a',
+    transition: 'all 0.2s',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '12px',
+  },
+  drawInfo: {
+    color: '#666',
+    fontSize: '14px',
+    fontFamily: '"Comic Neue", cursive',
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  // Golden Ticket Styles
+  winnerCard: {
+    position: 'relative',
+    background: '#ffd23f',
+    border: '6px solid #1a1a1a',
+    borderRadius: '24px',
+    padding: '40px',
+    marginTop: '40px',
+    boxShadow: '12px 12px 0 #1a1a1a',
+    overflow: 'hidden',
+  },
+  winnerHeader: {
+    textAlign: 'center',
+    marginBottom: '32px',
+  },
+  winnerBadge: {
+    fontSize: '80px',
+    marginBottom: '16px',
+    textShadow: '4px 4px 0 rgba(0, 0, 0, 0.2)',
+  },
+  winnerTitle: {
+    fontSize: '48px',
+    fontWeight: 900,
+    fontFamily: '"Fredoka", sans-serif',
+    color: '#1a1a1a',
+    textTransform: 'uppercase',
+    letterSpacing: '2px',
+    margin: 0,
+    textShadow: '4px 4px 0 rgba(255, 77, 109, 0.4)',
+  },
+  winnerAvatarContainer: {
+    display: 'flex',
+    justifyContent: 'center',
+    marginBottom: '32px',
+  },
+  winnerAvatar: {
+    width: '140px',
+    height: '140px',
+    borderRadius: '50%',
+    border: '6px solid #1a1a1a',
+    boxShadow: '6px 6px 0 #1a1a1a',
+    objectFit: 'cover',
+    background: '#ffffff',
+  },
+  winnerAvatarFallback: {
+    width: '140px',
+    height: '140px',
+    borderRadius: '50%',
+    border: '6px solid #1a1a1a',
+    boxShadow: '6px 6px 0 #1a1a1a',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '48px',
+    fontWeight: 900,
+    fontFamily: '"Fredoka", sans-serif',
+    color: '#ffffff',
+  },
+  winnerInfo: {
+    background: '#ffffff',
+    border: '5px solid #1a1a1a',
+    borderRadius: '16px',
+    padding: '24px',
+    marginBottom: '24px',
+    boxShadow: '6px 6px 0 #1a1a1a',
+  },
+  winnerLabel: {
+    color: '#666',
+    fontSize: '12px',
+    fontWeight: 700,
+    textTransform: 'uppercase',
+    letterSpacing: '1px',
+    marginBottom: '8px',
+    fontFamily: '"Comic Neue", cursive',
+  },
+  winnerName: {
+    color: '#1a1a1a',
+    fontSize: '28px',
+    fontWeight: 900,
+    fontFamily: '"Fredoka", sans-serif',
+    marginBottom: '8px',
+    wordBreak: 'break-all',
+  },
+  winnerAddress: {
+    color: '#999',
+    fontSize: '14px',
+    fontFamily: 'monospace',
+    fontWeight: 600,
+  },
+  winnerPrizeBox: {
+    textAlign: 'center',
+    padding: '32px',
+    background: '#06d6a0',
+    border: '5px solid #1a1a1a',
+    borderRadius: '20px',
+    boxShadow: '8px 8px 0 #1a1a1a',
+  },
+  winnerPrizeLabel: {
+    color: '#1a1a1a',
+    fontSize: '16px',
+    fontWeight: 900,
+    textTransform: 'uppercase',
+    letterSpacing: '2px',
+    marginBottom: '16px',
+    fontFamily: '"Fredoka", sans-serif',
+  },
+  winnerPrizeAmount: {
+    color: '#1a1a1a',
+    fontSize: '56px',
+    fontWeight: 900,
+    fontFamily: '"Fredoka", sans-serif',
+    margin: '8px 0',
+    textShadow: '3px 3px 0 rgba(255, 255, 255, 0.3)',
+  },
+  winnerPrizeCurrency: {
+    color: '#1a1a1a',
+    fontSize: '20px',
+    fontWeight: 700,
+    fontFamily: '"Comic Neue", cursive',
+    textTransform: 'uppercase',
+  },
+  winnerDecoration: {
+    textAlign: 'center',
+    fontSize: '32px',
+    marginTop: '24px',
+  },
+  goldenTicket: {
+    position: 'relative',
+    background: 'linear-gradient(135deg, #ffd700 0%, #ffed4e 50%, #ffd700 100%)',
+    border: '6px solid #1a1a1a',
+    borderRadius: '24px',
+    padding: '40px',
+    marginTop: '40px',
+    boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3), 12px 12px 0 #1a1a1a',
+    overflow: 'hidden',
+  },
+  confettiOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    pointerEvents: 'none',
+    zIndex: 9999,
+  },
+  confettiParticle: {
+    position: 'absolute',
+    width: '12px',
+    height: '12px',
+    border: '2px solid #1a1a1a',
+    borderRadius: '2px',
+  },
+  ticketHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '16px',
+    marginBottom: '32px',
+  },
+  ticketStars: {
+    fontSize: '32px',
+    animation: 'sparkle 1.5s infinite',
+  },
+  ticketTitle: {
+    fontSize: '48px',
+    fontWeight: 900,
+    fontFamily: '"Fredoka", sans-serif',
+    color: '#1a1a1a',
+    textTransform: 'uppercase',
+    letterSpacing: '2px',
+    margin: 0,
+    textShadow: '3px 3px 0 rgba(255, 77, 109, 0.3)',
+  },
+  ticketAvatarContainer: {
+    display: 'flex',
+    justifyContent: 'center',
+    marginBottom: '24px',
+  },
+  ticketAvatar: {
+    width: '120px',
+    height: '120px',
+    borderRadius: '50%',
+    border: '6px solid #1a1a1a',
+    boxShadow: '0 8px 16px rgba(0, 0, 0, 0.2)',
+    objectFit: 'cover',
+    background: '#ffffff',
+  },
+  ticketAvatarFallback: {
+    width: '120px',
+    height: '120px',
+    borderRadius: '50%',
+    border: '6px solid #1a1a1a',
+    boxShadow: '0 8px 16px rgba(0, 0, 0, 0.2)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '36px',
+    fontWeight: 900,
+    fontFamily: '"Fredoka", sans-serif',
+    color: '#ffffff',
+  },
+  ticketInfo: {
+    background: 'rgba(255, 255, 255, 0.95)',
+    border: '4px solid #1a1a1a',
+    borderRadius: '16px',
+    padding: '24px',
+    marginBottom: '24px',
+    textAlign: 'center',
+  },
+  ticketLabel: {
+    color: '#666',
+    fontSize: '12px',
+    fontWeight: 700,
+    textTransform: 'uppercase',
+    letterSpacing: '2px',
+    marginBottom: '8px',
+    fontFamily: '"Comic Neue", cursive',
+  },
+  ticketName: {
+    color: '#1a1a1a',
+    fontSize: '32px',
+    fontWeight: 900,
+    fontFamily: '"Fredoka", sans-serif',
+    marginBottom: '4px',
+    wordBreak: 'break-all',
+  },
+  ticketAddress: {
+    color: '#999',
+    fontSize: '14px',
+    fontFamily: '"Courier New", monospace',
+    fontWeight: 600,
+  },
+  ticketPrize: {
+    background: 'rgba(6, 214, 160, 0.2)',
+    border: '4px solid #06d6a0',
+    borderRadius: '16px',
+    padding: '24px',
+    textAlign: 'center',
+  },
+  ticketPrizeLabel: {
+    color: '#06d6a0',
+    fontSize: '14px',
+    fontWeight: 700,
+    textTransform: 'uppercase',
+    letterSpacing: '2px',
+    marginBottom: '8px',
+    fontFamily: '"Comic Neue", cursive',
+  },
+  ticketPrizeAmount: {
+    color: '#06d6a0',
+    fontSize: '56px',
+    fontWeight: 900,
+    fontFamily: '"Fredoka", sans-serif',
+    margin: '8px 0',
+    lineHeight: '1',
+  },
+  ticketPrizeCurrency: {
+    color: '#06d6a0',
+    fontSize: '20px',
+    fontWeight: 700,
+    fontFamily: '"Comic Neue", cursive',
+    textTransform: 'uppercase',
+  },
+  ticketDecoration: {
+    textAlign: 'center',
+    fontSize: '32px',
+    marginTop: '24px',
   },
   // Modal Styles
   modalOverlay: {
