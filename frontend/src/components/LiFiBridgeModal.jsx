@@ -130,6 +130,14 @@ export function LiFiBridgeModal({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
+              {/* Wallet Connection Check */}
+              {!address && (
+                <div style={styles.warningBox}>
+                  <AlertCircle size={20} />
+                  <span>Please connect your wallet to use the bridge</span>
+                </div>
+              )}
+
               {/* Chain Selection */}
               <div style={styles.section}>
                 <label style={styles.label}>Select Source Chain</label>
@@ -175,18 +183,20 @@ export function LiFiBridgeModal({
               <motion.button
                 style={{
                   ...styles.actionButton,
-                  ...((!amount || !selectedChain) ? styles.buttonDisabled : {})
+                  ...((!amount || !selectedChain || !address) ? styles.buttonDisabled : {})
                 }}
-                whileHover={amount && selectedChain ? { scale: 1.02 } : {}}
-                whileTap={amount && selectedChain ? { scale: 0.98 } : {}}
+                whileHover={amount && selectedChain && address ? { scale: 1.02 } : {}}
+                whileTap={amount && selectedChain && address ? { scale: 0.98 } : {}}
                 onClick={handleGetQuote}
-                disabled={!amount || !selectedChain || isLoading}
+                disabled={!amount || !selectedChain || !address || isLoading}
               >
                 {isLoading ? (
                   <>
                     <Loader2 size={20} className="spin" />
                     Getting Quote...
                   </>
+                ) : !address ? (
+                  'Connect Wallet First'
                 ) : (
                   'Get Bridge Quote'
                 )}
@@ -516,6 +526,20 @@ const styles = {
     gap: '12px',
     background: '#ffe6e6',
     border: '3px solid #ff4d6d',
+    borderRadius: '12px',
+    padding: '16px',
+    fontFamily: '"Comic Neue", cursive',
+    fontSize: '14px',
+    fontWeight: '600',
+    color: '#1a1a1a',
+    marginBottom: '16px',
+  },
+  warningBox: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    background: '#fff9e6',
+    border: '3px solid #ffd23f',
     borderRadius: '12px',
     padding: '16px',
     fontFamily: '"Comic Neue", cursive',

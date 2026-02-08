@@ -269,15 +269,19 @@ export function useLotteryPoolUSDC(userAddress) {
     players: playersData || [],
     getPlayers: getPlayersForRound,
     playersCount: playersData ? playersData.length : 0,
+    playersData: playersData || [], // Add this for backward compatibility
+    refetchPlayers, // Add refetch function for players
     
     // User data
     minDeposit: minDeposit ? Number(minDeposit) / 1e6 : 100,
     userDeposits: userDeposits ? Number(userDeposits) / 1e6 : 0,
     getUserDeposit: getUserDepositAmount,
+    refetchUserDeposits, // Add refetch function for user deposits
     
     // Winner data
     roundWinner,
     roundPrize: roundPrize ? Number(roundPrize) / 1e6 : 0,
+    refetchWinner, // Add refetch function for winner
     
     // Deposit functions
     deposit: handleDeposit,

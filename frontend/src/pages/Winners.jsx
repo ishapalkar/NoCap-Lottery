@@ -6,7 +6,14 @@ import { useEns } from '../hooks/useEns';
 
 // ENS-enabled Winner Row Component
 function WinnerRow({ winner, index }) {
-  const { displayName } = useEns(winner.address);
+  const { displayName, ensAvatar } = useEns(winner.address);
+
+  // Generate avatar color from address for fallback
+  const getAvatarColor = (address) => {
+    const colors = ['#ff4d6d', '#00d4ff', '#ffd23f', '#06d6a0', '#c77dff', '#ff006e'];
+    const hash = address.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return colors[hash % colors.length];
+  };
 
   return (
     <motion.div
@@ -33,6 +40,20 @@ function WinnerRow({ winner, index }) {
         </div>
 
         <div style={styles.addressCell}>
+          {ensAvatar ? (
+            <img 
+              src={ensAvatar} 
+              alt="ENS Avatar"
+              style={styles.avatarImage}
+            />
+          ) : (
+            <div style={{
+              ...styles.avatar,
+              backgroundColor: getAvatarColor(winner.address),
+            }}>
+              {winner.address.slice(2, 4).toUpperCase()}
+            </div>
+          )}
           <span style={styles.address}>
             {displayName || `${winner.address.slice(0, 6)}...${winner.address.slice(-4)}`}
           </span>
@@ -133,7 +154,7 @@ const mockWinners = [
   {
     id: 8,
     rank: 8,
-    address: '0x3b0aa499c0acf0c239e5e20ce8b9bea5c8a9e1cb', // gregskril.eth
+    address: '0x05F7Aa50391BfAd9F28A507F63a202547275c4eC',
     prize: '380 USDC',
     multiplier: 30,
     blockchain: 'Base',
@@ -143,7 +164,7 @@ const mockWinners = [
   {
     id: 9,
     rank: 9,
-    address: '0x179A862703a4adfb29896552DF9e307980D81026', // ccarella.eth
+    address: '0x4cAd382572C51bF90a0402E00B7882D25a161ae0',
     prize: '250 USDC',
     multiplier: 25,
     blockchain: 'Base',
@@ -153,7 +174,7 @@ const mockWinners = [
   {
     id: 10,
     rank: 10,
-    address: '0xEfC0e701A824943b469a694aC564Aa1efF7Ab7dd', // blockbard.eth
+    address: '0x260EcDd9e8bd7254a5d16eA5Dc2a3A56391FBd26',
     prize: '150 USDC',
     multiplier: 20,
     blockchain: 'Base',
@@ -323,6 +344,28 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '0.5rem',
+  },
+  avatar: {
+    width: '2.5rem',
+    height: '2.5rem',
+    borderRadius: '50%',
+    border: '3px solid var(--ink-black)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontFamily: '"Fredoka", sans-serif',
+    fontSize: '0.75rem',
+    fontWeight: 900,
+    color: '#ffffff',
+    flexShrink: 0,
+  },
+  avatarImage: {
+    width: '2.5rem',
+    height: '2.5rem',
+    borderRadius: '50%',
+    border: '3px solid var(--ink-black)',
+    objectFit: 'cover',
+    flexShrink: 0,
   },
   address: {
     fontFamily: 'monospace',

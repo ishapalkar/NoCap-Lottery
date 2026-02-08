@@ -3,10 +3,17 @@ import { createConfig, getRoutes, executeRoute } from '@lifi/sdk';
 import { useAccount, useWalletClient } from 'wagmi';
 
 // Initialize LI.FI SDK configuration
-createConfig({
+const lifiConfig = {
   integrator: 'NoCap-Lottery', // Your project name for analytics
   apiUrl: 'https://li.quest/v1',
-});
+};
+
+// Add API key if provided in environment
+if (import.meta.env.VITE_LIFI_API_KEY) {
+  lifiConfig.apiKey = import.meta.env.VITE_LIFI_API_KEY;
+}
+
+createConfig(lifiConfig);
 
 // Target chain where vaults are deployed
 const TARGET_CHAIN_ID = 8453; // Base mainnet (change to 84532 for Base Sepolia)
@@ -83,8 +90,19 @@ export function useLiFi() {
       // For ETH: keep as WETH (wrap if needed)
       // For BTC: keep as WBTC
       
-      // Native ETH needs special handling
-      const fromTokenAddress = fromToken === 'ETH' ? '0x0000000000000000000000000000000000000000' : fromToken;
+      // Get proper token addresses for LI.FI
+      // Use native token address for ETH, otherwise use symbol
+      const getTokenAddress = (symbol, chainId) => {
+        // Native tokens
+        if (symbol === 'ETH') return '0x0000000000000000000000000000000000000000';
+        
+        // For other tokens, LI.FI can work with symbols on mainnet
+        // The SDK will automatically resolve these to contract addresses
+        return symbol;
+      };
+
+      const fromTokenAddress = getTokenAddress(fromToken, fromChainId);
+      const toTokenAddress = getTokenAddress(toToken, toChainId);
 
       // Request SAME-ASSET cross-chain route (or normalized within pool)
       // Note: Using Base mainnet (8453) as default since LI.FI doesn't support testnets
@@ -92,7 +110,7 @@ export function useLiFi() {
         fromChainId: parseInt(fromChainId),
         toChainId: parseInt(toChainId),
         fromTokenAddress: fromTokenAddress,
-        toTokenAddress: toToken, // Same asset or normalized (USDT→USDC, ETH→WETH)
+        toTokenAddress: toTokenAddress, // Same asset or normalized (USDT→USDC, ETH→WETH)
         fromAmount: amount,
         fromAddress: address,
         toAddress: address, // Same address receives on target chain
@@ -104,9 +122,23 @@ export function useLiFi() {
       };
 
       console.log(`🔄 Routing ${fromToken} → ${toToken} via ${pool.name}`);
-      console.log('Route request:', routesRequest);
+      console.log('Route request:', {
+        from: `Chain ${fromChainId}`,
+        to: `Chain ${toChainId}`,
+        token: `${fromToken} → ${toToken}`,
+        amount: amount,
+      });
       
       const result = await getRoutes(routesRequest);
+      
+      console.log('LI.FI response:', {
+        routesFound: result.routes?.length || 0,
+        bestRoute: result.routes?.[0] ? {
+          tool: result.routes[0].steps[0]?.tool,
+          estimatedTime: result.routes[0].steps[0]?.estimate?.executionDuration,
+          gasCost: result.routes[0].steps[0]?.estimate?.gasCosts?.[0]?.amountUSD
+        } : null
+      });
       
       if (!result.routes || result.routes.length === 0) {
         throw new Error(`No routes found for ${fromToken} → ${toToken}. Chain or token might not be supported by LI.FI on mainnet.`);

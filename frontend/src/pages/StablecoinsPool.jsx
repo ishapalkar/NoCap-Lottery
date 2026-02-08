@@ -341,7 +341,6 @@ export function StablecoinsPool() {
                   <button 
                     onClick={() => setShowBridgeModal(true)}
                     style={styles.bridgeButton}
-                    disabled={!lotteryData.depositWindowOpen}
                     className="btn-bounce"
                   >
                     🌉 BRIDGE FROM ANY CHAIN
