@@ -30,15 +30,15 @@ function DemoPrize() {
   const {
     prizePool,
     bonusPool,
-    participantCount,
-    isLoading: contractLoading,
     fundDemoPrize,
     fundDemoBonus,
+    isFundPrizePending,
+    isFundPrizeSuccess,
+    isFundBonusPending,
+    isFundBonusSuccess,
     drawDemoWinner,
     lastWinner,
-    refetchAll,
-    isFundPrizeSuccess,
-    isFundBonusSuccess
+    refetchAll
   } = useDemoPrizePool();
 
   const lotteryData = useLotteryPoolUSDC(address);
@@ -93,6 +93,20 @@ function DemoPrize() {
       alert('⚠️ No participants! Add mock participants first.');
       return;
     }
+
+    if (!isConnected) {
+      alert('⚠️ Connect your wallet to draw a winner!');
+      return;
+    }
+
+    // Check minimum prize requirement (MIN_PRIZE = 10 USDC in contract)
+    if (totalPrize < 10) {
+      alert(`⚠️ Prize pool too small! Need at least $10 USDC to draw.
+      
+Current prize pool: $${totalPrize.toFixed(2)}
+Please fund the prize pool with at least $${(10 - totalPrize).toFixed(2)} more USDC.`);
+      return;
+    }
     
     setIsSpinning(true);
     setIsLeverPulled(true);
@@ -106,6 +120,15 @@ function DemoPrize() {
       completeAnimation();
     }, 3000);
   };
+
+  // Watch for lastWinner updates from the smart contract event
+  useEffect(() => {
+    if (lastWinner && lastWinner.round === lotteryData.currentRound) {
+      console.log('🏆 Winner determined by smart contract:', lastWinner);
+      setWinner(lastWinner.winner);
+      completeAnimation();
+    }
+  }, [lastWinner, lotteryData.currentRound]);
 
   const completeAnimation = () => {
     setIsSpinning(false);
@@ -129,6 +152,8 @@ function DemoPrize() {
     
     try {
       if (needsPrizeApproval) {
+        console.log('Approving', fundPrizeAmount, 'USDC for prize pool');
+        // Trigger approval - useEffect will auto-fund after
         await approvePrize(fundPrizeAmount);
         await refetchPrizeAllowance();
         // Deposit will be triggered automatically by useEffect after approval
@@ -140,7 +165,7 @@ function DemoPrize() {
       // Success state will trigger refetch via useEffect
     } catch (error) {
       console.error('Fund prize failed:', error);
-      alert(`❌ Failed: ${error.message}`);
+      alert(`❌ Failed: ${error.message || error.shortMessage || 'Unknown error'}`);
     }
   };
 
@@ -157,6 +182,8 @@ function DemoPrize() {
     
     try {
       if (needsBonusApproval) {
+        console.log('Approving', fundBonusAmount, 'USDC for bonus pool');
+        // Trigger approval - useEffect will auto-fund after
         await approveBonus(fundBonusAmount);
         await refetchBonusAllowance();
         // Deposit will be triggered automatically by useEffect after approval
@@ -168,7 +195,7 @@ function DemoPrize() {
       // Success state will trigger refetch via useEffect
     } catch (error) {
       console.error('Fund bonus failed:', error);
-      alert(`❌ Failed: ${error.message}`);
+      alert(`❌ Failed: ${error.message || error.shortMessage || 'Unknown error'}`);
     }
   };
 
@@ -267,7 +294,7 @@ function DemoPrize() {
         >
           <h1 style={styles.title}>🎰 Lottery Draw Simulation</h1>
           <p style={styles.subtitle}>
-            Fund the prize pool, add mock participants, and simulate a week ahead to see the draw!
+            Fund prize pool, deposit USDC to lottery, then draw a winner using Chainlink VRF!
           </p>
         </motion.div>
 
@@ -306,27 +333,27 @@ function DemoPrize() {
           <h2 style={styles.cardTitle}>📊 Current Pool Status</h2>
           <div style={styles.statsGrid}>
             <div style={styles.statBox}>
-              <div style={styles.statLabel}>Prize Pool (Yield)</div>
-              <div style={styles.statValue}>${prizeAmount.toFixed(2)}</div>
-              <div style={styles.statDesc}>From Aave yield</div>
+              <div style={styles.statLabel}>Demo Prize Pool</div>
+              <div style={styles.statValue}>${totalPrize.toFixed(2)}</div>
+              <div style={styles.statDesc}>USDC in demo contract</div>
             </div>
             <div style={styles.statBox}>
               <div style={styles.statLabel}>
-                Bonus Pool
+                Lottery Bonus Pool
                 <button 
                   onClick={() => setShowBonusInfo(!showBonusInfo)}
-                  style={styles.infoButton}
+                  style={styles.bonusLearnMore}
                   title="Learn about bonus pool"
                 >
-                  <ExternalLink size={14} />
+                  Learn more
                 </button>
               </div>
-              <div style={styles.statValue}>${bonusAmount.toFixed(2)}</div>
-              <div style={styles.statDesc}>Retention rewards</div>
+              <div style={styles.statValue}>${lotteryData.bonusPool?.toFixed(2) || '0.00'}</div>
+              <div style={styles.statDesc}>From lottery contract</div>
             </div>
             <div style={styles.statBox}>
               <div style={styles.statLabel}>Total Prize</div>
-              <div style={{...styles.statValue, color: '#06d6a0'}}>${totalPrize.toFixed(2)}</div>
+              <div style={{...styles.statValue, color: '#06d6a0'}}>${(totalPrize + (lotteryData.bonusPool || 0)).toFixed(2)}</div>
               <div style={styles.statDesc}>Winner takes all</div>
             </div>
             <div style={styles.statBox}>
@@ -347,13 +374,8 @@ function DemoPrize() {
               style={styles.bonusInfo}
             >
               <p style={styles.bonusText}>
-                The bonus pool is a <strong>customer retention mechanism</strong> that rewards consistent participants. 
-                <span 
-                  onClick={() => setShowBonusInfo(true)}
-                  style={styles.bonusLink}
-                >
-                  {' '}Learn more
-                </span>
+                💎 The lottery bonus pool comes from the main LotteryPoolUSDC contract and is automatically added to the demo prize when a winner is drawn.
+                It rewards participants from the actual lottery deposits.
               </p>
             </motion.div>
           )}
@@ -370,8 +392,8 @@ function DemoPrize() {
               style={styles.fundCard}
               className="card-squishy"
             >
-              <h3 style={styles.cardTitle}>💰 Fund Prize Pool (Yield)</h3>
-              <p style={styles.fundDesc}>Simulate Aave yield earnings</p>
+              <h3 style={styles.cardTitle}>💰 Fund Prize Pool</h3>
+              <p style={styles.fundDesc}>Add USDC to demo prize pool</p>
               
               <div style={styles.inputGroup}>
                 <input
@@ -413,7 +435,7 @@ function DemoPrize() {
               className="card-squishy"
             >
               <h3 style={styles.cardTitle}>💎 Fund Bonus Pool</h3>
-              <p style={styles.fundDesc}>Add retention rewards</p>
+              <p style={styles.fundDesc}>Add USDC to demo prize pool (tracked separately in events)</p>
               
               <div style={styles.inputGroup}>
                 <input
@@ -448,7 +470,7 @@ function DemoPrize() {
           </div>
         )}
 
-        {/* Mock Participants */}
+        {/* Deposit to Lottery Pool */}
         {isConnected && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -462,7 +484,7 @@ function DemoPrize() {
               <h3 style={styles.cardTitle}>Add Mock Participants</h3>
             </div>
             <p style={styles.fundDesc}>
-              Add {mockParticipantCount} simulated participants for the demo draw (no USDC required)
+              Add simulated participants for the demo draw (no USDC required)
             </p>
             
             <div style={styles.sliderGroup}>
@@ -549,10 +571,10 @@ function DemoPrize() {
               transition={{ duration: 0.3, repeat: isSpinning ? Infinity : 0 }}
               style={styles.prizeAmount2}
             >
-              {isSpinning ? '???' : `$${totalPrize.toFixed(2)}`}
+              {isSpinning ? '???' : `$${(totalPrize + (lotteryData.bonusPool || 0)).toFixed(2)}`}
             </motion.div>
             <p style={styles.prizeLabel2}>
-              {isSpinning ? 'DRAWING...' : 'TOTAL PRIZE'}
+              {isSpinning ? '⏳ WAITING FOR CHAINLINK VRF...' : 'TOTAL PRIZE'}
             </p>
           </div>
 
@@ -564,8 +586,8 @@ function DemoPrize() {
               style={styles.leverStick}
             />
             <motion.button
-              whileHover={{ scale: totalParticipants > 0 ? 1.05 : 1 }}
-              whileTap={{ scale: totalParticipants > 0 ? 0.95 : 1 }}
+              whileHover={{ scale: totalParticipants > 0 && !isSpinning ? 1.05 : 1 }}
+              whileTap={{ scale: totalParticipants > 0 && !isSpinning ? 0.95 : 1 }}
               onClick={handleDrawWinner}
               disabled={isSpinning || totalParticipants === 0}
               style={{
@@ -578,17 +600,28 @@ function DemoPrize() {
               🎯
             </motion.button>
             <p style={styles.leverText}>
-              {isSpinning ? 'Drawing...' : 
+              {isSpinning ? 'Waiting for VRF...' : 
                totalParticipants === 0 ? 'Add participants first!' :
                'PULL LEVER!'}
             </p>
+            {isSpinning && (
+              <button
+                onClick={() => {
+                  setIsSpinning(false);
+                  setIsLeverPulled(false);
+                }}
+                style={styles.cancelButton}
+              >
+                Cancel Wait
+              </button>
+            )}
           </div>
 
           {/* Winner Display */}
           {showWinner && winner && (
             <WinnerDisplay 
               address={winner} 
-              prize={totalPrize}
+              prize={totalPrize + (lotteryData.bonusPool || 0)}
             />
           )}
         </motion.div>
@@ -829,14 +862,17 @@ const styles = {
     fontFamily: '"Comic Neue", cursive',
     fontWeight: '600',
   },
-  infoButton: {
+  bonusLearnMore: {
     background: 'transparent',
     border: 'none',
     color: '#ff4d6d',
     cursor: 'pointer',
     padding: '0',
-    display: 'inline-flex',
-    alignItems: 'center',
+    marginLeft: '8px',
+    fontSize: '10px',
+    fontFamily: '"Comic Neue", cursive',
+    fontWeight: '600',
+    textDecoration: 'underline',
     transition: 'color 0.2s',
   },
   statItem: {
@@ -856,12 +892,6 @@ const styles = {
     fontFamily: '"Comic Neue", cursive',
     fontWeight: '600',
     margin: 0,
-  },
-  bonusLink: {
-    color: '#ff4d6d',
-    textDecoration: 'underline',
-    cursor: 'pointer',
-    fontWeight: 700,
   },
   fundingGrid: {
     display: 'grid',
@@ -1109,6 +1139,20 @@ const styles = {
     color: '#1a1a1a',
     fontFamily: '"Fredoka", sans-serif',
     textTransform: 'uppercase',
+  },
+  cancelButton: {
+    marginTop: '16px',
+    padding: '10px 20px',
+    background: '#ff4d6d',
+    color: '#ffffff',
+    border: '3px solid #1a1a1a',
+    borderRadius: '12px',
+    fontSize: '14px',
+    fontWeight: 700,
+    fontFamily: '"Comic Neue", cursive',
+    cursor: 'pointer',
+    boxShadow: '4px 4px 0 #1a1a1a',
+    transition: 'all 0.2s',
   },
   winnerCard: {
     background: '#06d6a0',
