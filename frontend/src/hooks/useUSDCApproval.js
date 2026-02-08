@@ -11,10 +11,10 @@ export function useUSDCApproval(spenderAddress) {
     hash,
   });
 
-  const approve = (amount) => {
+  const approve = async (amount) => {
     if (!spenderAddress) return;
     
-    writeContract({
+    return writeContract({
       address: USDC_ADDRESS,
       abi: IERC20ABI,
       functionName: 'approve',
